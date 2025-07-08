@@ -1,6 +1,6 @@
 # Geogram-Three.js
 
-A high-performance JavaScript library and visualization tool for 3D computational geometry in the browser, powered by the Geogram C++ library (via WebAssembly) and rendered with Three.js.
+A high-performance JavaScript library and visualization tool for 3D computational geometry in the browser, powered by the [Geogram C++ library](https://github.com/BrunoLevy/geogram) (via WebAssembly) and rendered with Three.js.
 
 ## Live Demo
 
@@ -126,8 +126,8 @@ Planned features:
 
 ## Credits
 
-- **Geogram**: Created by Bruno Levy and the ALICE project-team
-- **Three.js**: Created by Ricardo Cabello (Mr.doob) and contributors
+- **[Geogram](https://github.com/BrunoLevy/geogram)**: Created by Bruno Levy and the ALICE project-team
+- **[Three.js](https://github.com/mrdoob/three.js)**: Created by Ricardo Cabello (Mr.doob) and contributors
 - **Development**: Assisted by Google's AI and Claude
 
 ## License
