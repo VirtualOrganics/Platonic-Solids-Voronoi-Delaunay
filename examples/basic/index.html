@@ -155,12 +155,12 @@
         <div id="status" class="status"></div>
     </div>
     
-    <script src="periodic_delaunay.js?v=6"></script>
+    <script src="../../dist/periodic_delaunay.js"></script>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
-        import { DelaunayComputation } from './DelaunayComputation.js';
+        import { DelaunayComputation } from '../../src/js/DelaunayComputation.js';
         import PoissonDiskSampling from 'poisson-disk-sampling';
         
         let scene, camera, renderer, controls;
