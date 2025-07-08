@@ -16,7 +16,7 @@ This project provides a working implementation of a **Periodic 3D Delaunay Trian
 
 ## Live Demo
 
-*(Coming soon - will be hosted on GitHub Pages)*
+🎮 **[Try the Live Demo](https://virtualorganics.github.io/Geogram-Three.js/examples/basic/)**
 
 ## Screenshots
 
