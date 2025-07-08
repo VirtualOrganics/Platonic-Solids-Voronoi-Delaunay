@@ -4,8 +4,6 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <set>
-#include <algorithm>
 
 // Global initialization flag
 static bool g_geogram_initialized = false;
@@ -82,12 +80,6 @@ emscripten::val compute_periodic_delaunay_js(emscripten::val points_array, int n
     int num_tets = delaunay->nb_cells();
     std::cout << "Found " << num_tets << " tetrahedra." << std::endl;
     
-    // Debug: Check the actual number of vertices in the triangulation
-    if (is_periodic) {
-        std::cout << "DEBUG: nb_vertices() = " << delaunay->nb_vertices() << std::endl;
-        std::cout << "DEBUG: original num_points = " << num_points << std::endl;
-    }
-    
     // Also check if we have a valid triangulation
     if (num_tets == 0 && num_points >= 4) {
         std::cout << "WARNING: No tetrahedra generated despite having " << num_points << " points." << std::endl;
@@ -101,67 +93,13 @@ emscripten::val compute_periodic_delaunay_js(emscripten::val points_array, int n
     // Create JavaScript array for results
     emscripten::val result = emscripten::val::array();
     
-    // In periodic mode, Geogram creates 27 copies of each vertex (3^3 for 3D)
-    // We need to map the vertex indices back to the original range [0, num_points)
-    const int nb_vertices_non_periodic = num_points;
-    
-    // Debug first few tetrahedra
-    if (is_periodic) {
-        std::cout << "DEBUG: First few tetrahedra raw indices:" << std::endl;
-        for (int t = 0; t < std::min(3, num_tets); ++t) {
-            std::cout << "  Tet " << t << ": [" 
-                      << delaunay->cell_vertex(t, 0) << ", "
-                      << delaunay->cell_vertex(t, 1) << ", "
-                      << delaunay->cell_vertex(t, 2) << ", "
-                      << delaunay->cell_vertex(t, 3) << "]" << std::endl;
-        }
-    }
-    
-    // Use a set to track unique tetrahedra
-    std::set<std::vector<int>> unique_tets;
-    int duplicate_count = 0;
-    
     for (int t = 0; t < num_tets; ++t) {
-        std::vector<int> tet_indices(4);
-        
-        for (int v = 0; v < 4; ++v) {
-            int vertex_index = delaunay->cell_vertex(t, v);
-            
-            // In periodic mode, map back to original vertex
-            if (is_periodic && vertex_index >= nb_vertices_non_periodic) {
-                vertex_index = vertex_index % nb_vertices_non_periodic;
-            }
-            
-            // Ensure the index is valid
-            if (vertex_index < 0 || vertex_index >= nb_vertices_non_periodic) {
-                std::cerr << "Invalid vertex index " << vertex_index 
-                          << " in tetrahedron " << t << std::endl;
-                vertex_index = 0; // Fallback to prevent crashes
-            }
-            
-            tet_indices[v] = vertex_index;
-        }
-        
-        // Sort the indices to create a canonical representation
-        std::vector<int> sorted_indices = tet_indices;
-        std::sort(sorted_indices.begin(), sorted_indices.end());
-        
-        // Check if this tetrahedron is unique
-        if (unique_tets.insert(sorted_indices).second) {
-            // This is a new unique tetrahedron, add it to results
-            emscripten::val tet = emscripten::val::array();
-            for (int v = 0; v < 4; ++v) {
-                tet.set(v, tet_indices[v]);
-            }
-            result.set(result["length"].as<int>(), tet);
-        } else {
-            duplicate_count++;
-        }
-    }
-    
-    if (is_periodic && duplicate_count > 0) {
-        std::cout << "Filtered out " << duplicate_count << " duplicate tetrahedra." << std::endl;
-        std::cout << "Returning " << unique_tets.size() << " unique tetrahedra." << std::endl;
+        emscripten::val tet = emscripten::val::array();
+        tet.set(0, delaunay->cell_vertex(t, 0));
+        tet.set(1, delaunay->cell_vertex(t, 1));
+        tet.set(2, delaunay->cell_vertex(t, 2));
+        tet.set(3, delaunay->cell_vertex(t, 3));
+        result.set(t, tet);
     }
 
     return result;

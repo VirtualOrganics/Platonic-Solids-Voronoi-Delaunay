@@ -1,160 +1,140 @@
 # Geogram-Three.js
 
-A WebAssembly-powered 3D periodic Delaunay-Voronoi triangulation library for the browser, combining the computational power of [Geogram](https://github.com/BrunoLevy/geogram) with the visualization capabilities of [Three.js](https://github.com/mrdoob/three.js).
+A high-performance JavaScript library and visualization tool for 3D computational geometry in the browser, powered by the [Geogram C++ library](https://github.com/BrunoLevy/geogram) (via WebAssembly) and rendered with Three.js.
 
-![Geogram-Three.js Demo](Geogram1.png)
+## Live Demo
+
+🎮 **[Try the Live Demo](https://virtualorganics.github.io/Geogram-Three.js/examples/basic/)**
+
+<p align="left">
+  <img src="docs/Geogram1.png" alt="3D Periodic Delaunay Triangulation" width="50%">
+</p>
+
+This project provides a working implementation of a **Periodic 3D Delaunay Triangulation**, a feature not commonly available in standard JavaScript libraries.
 
 ## Features
 
-- **3D Delaunay Triangulation**: Compute Delaunay tetrahedralization of 3D point sets
-- **3D Voronoi Diagrams**: Generate Voronoi cells from Delaunay triangulation using barycenter method
-- **Periodic Boundary Conditions**: Support for periodic (toroidal) domains
-- **WebAssembly Performance**: Native-speed computation in the browser
-- **Three.js Visualization**: Interactive 3D rendering with orbit controls
-- **Clean JavaScript API**: Simple, promise-based interface hiding WASM complexity
+- 🚀 High-performance 3D Delaunay Triangulation via Geogram/WASM
+- 🔄 Support for **Periodic** and Non-Periodic boundary conditions
+- 🎨 Interactive Three.js visualization for exploring the tetrahedral mesh
+- 📊 Real-time statistics (vertices, edges, tetrahedra)
+- 🎯 Well-distributed point generation with minimum distance constraints
+- 🔍 Visual distinction for periodic boundary-crossing edges
+- 🛠️ Clean interface for future expansion (e.g., Voronoi diagrams)
 
-## Demo
+## Screenshots
+<p align="left">
+  <img src="docs/screenshot.png" alt="3D Periodic Delaunay Triangulation" width="50%">
+</p>
+*3D Periodic Delaunay triangulation with 500 vertices*
 
-[Live Demo](https://virtualorganics.github.io/Geogram-Three.js/)
+## How to Run
 
-## Quick Start
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/YourUsername/Geogram-Three.js.git
+   cd Geogram-Three.js
+   ```
 
-### Using the Library
+2. Since this project uses WebAssembly, it must be run from a web server. Start a simple server:
+   ```bash
+   # Using Python 3
+   python -m http.server 8000
+   
+   # Or using Node.js
+   npx http-server -p 8000
+   ```
 
-```javascript
-import { DelaunayComputation } from './src/js/DelaunayComputation.js';
+3. Open your browser to: `http://localhost:8000/examples/basic/`
 
-// Initialize the WASM module
-const Module = await window.PeriodicDelaunayModule();
+## Project Structure
 
-// Create points (array of [x, y, z] coordinates in range [0, 1])
-const points = [
-    [0.1, 0.2, 0.3],
-    [0.4, 0.5, 0.6],
-    // ... more points
-];
-
-// Create computation instance
-const computation = new DelaunayComputation(points, true); // true for periodic
-
-// Run the computation
-await computation.compute(Module);
-
-// Access results
-console.log(`Computed ${computation.tetrahedra.length} tetrahedra`);
-console.log(`Generated ${computation.voronoiEdges.length} Voronoi edges`);
-
-// Tetrahedra: array of [v0, v1, v2, v3] vertex indices
-// Voronoi edges: array of {start: [x,y,z], end: [x,y,z], isPeriodic: boolean}
+```
+Geogram-Three.js/
+├── src/cpp/              # C++ source files
+│   ├── periodic_delaunay.cpp
+│   ├── Delaunay_psm.h
+│   └── Delaunay_psm.cpp
+├── dist/                 # Compiled WASM/JS files
+│   ├── periodic_delaunay.js
+│   └── periodic_delaunay.wasm
+├── examples/basic/       # Basic visualization example
+│   └── index.html
+├── .gitignore
+└── README.md
 ```
 
-### Visualization Example
+## Usage
 
-```javascript
-// Draw Delaunay edges
-for (const tet of computation.tetrahedra) {
-    // Extract and draw edges from tetrahedron
-}
+The visualization provides interactive controls:
 
-// Draw Voronoi diagram
-for (const edge of computation.voronoiEdges) {
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array([
-        edge.start[0], edge.start[1], edge.start[2],
-        edge.end[0], edge.end[1], edge.end[2]
-    ]);
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    
-    const material = edge.isPeriodic ? 
-        new THREE.LineBasicMaterial({ color: 0xffaa00 }) : 
-        new THREE.LineBasicMaterial({ color: 0xff6600 });
-    
-    const line = new THREE.Line(geometry, material);
-    scene.add(line);
-}
-```
+- **Periodic Mode**: Toggle between periodic and non-periodic triangulation
+- **Number of Points**: Adjust the number of vertices (4-200)
+- **Min Distance**: Set minimum distance between points for well-distributed generation
+- **Show/Hide Elements**: Toggle visibility of vertices, edges, tetrahedra, and boundary box
 
-## API Reference
+### Periodic vs Non-Periodic Mode
 
-### DelaunayComputation Class
+- **Non-periodic**: Standard Delaunay triangulation within the unit cube
+- **Periodic**: Delaunay triangulation with periodic boundary conditions, where opposite faces of the cube are connected
 
-#### Constructor
-```javascript
-new DelaunayComputation(points, isPeriodic = true)
-```
-- `points`: Array of 3D points as `[[x,y,z], ...]` or flat array `[x,y,z,x,y,z,...]`
-- `isPeriodic`: Boolean, whether to use periodic boundary conditions
+Edges that cross periodic boundaries are highlighted in orange.
 
-#### Methods
-```javascript
-async compute(wasmModule)
-```
-Runs the Delaunay-Voronoi computation. Returns the instance for chaining.
+## Technical Details
 
-```javascript
-getStats()
-```
-Returns an object with computation statistics:
-```javascript
-{
-    numPoints: number,
-    numTetrahedra: number,
-    numVoronoiEdges: number,
-    isPeriodic: boolean
-}
-```
+### WebAssembly Integration
 
-```javascript
-getPeriodicDistance(p1, p2)
-```
-Calculates the minimum image distance between two points in periodic space.
+The project uses Emscripten to compile the Geogram C++ library to WebAssembly, providing near-native performance in the browser. The main components:
 
-#### Properties
-- `pointsArray`: Array of input points as `[[x,y,z], ...]`
-- `tetrahedra`: Array of tetrahedra as `[[v0,v1,v2,v3], ...]`
-- `voronoiEdges`: Array of Voronoi edges as `[{start, end, tetraIndices, isPeriodic}, ...]`
-- `barycenters`: Array of tetrahedra barycenters as `[[x,y,z], ...]`
+- **Geogram PSM**: Portable Software Module version of Geogram's periodic Delaunay implementation
+- **C++ Bindings**: Custom wrapper using Embind for JavaScript interoperability
+- **ES Modules**: Modern JavaScript module system for Three.js integration
+
+### Key Algorithms
+
+- **Delaunay Triangulation**: Divides 3D space into tetrahedra such that no point is inside the circumsphere of any tetrahedron
+- **Periodic Boundaries**: Implements toroidal topology where the unit cube wraps around on all three axes
+- **Well-Distributed Points**: Uses minimum distance constraints to avoid degenerate configurations
 
 ## Building from Source
 
-### Prerequisites
+Prerequisites:
 - Emscripten SDK
-- Node.js
-- C++17 compiler
+- C++17 compatible compiler
 
-### Build Steps
 ```bash
-# Clone the repository
-git clone https://github.com/VirtualOrganics/Geogram-Three.js.git
-cd Geogram-Three.js
+# Install Emscripten
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install latest
+./emsdk activate latest
+source ./emsdk_env.sh
 
-# Build the WASM module
+# Build the project
 cd src/cpp
-./build.sh
-
-# The compiled files will be in dist/
+em++ --bind -o ../../dist/periodic_delaunay.js periodic_delaunay.cpp Delaunay_psm.cpp \
+  -I. -s ALLOW_MEMORY_GROWTH=1 -s MODULARIZE=1 \
+  -s EXPORT_NAME="PeriodicDelaunayModule" -s ASSERTIONS=1 -std=c++17 -O2
 ```
 
-## Implementation Details
+## Future Development
 
-### Voronoi Computation
-The library computes Voronoi diagrams using the barycenter method:
-1. Calculate the barycenter (center) of each Delaunay tetrahedron
-2. Build adjacency information for tetrahedra sharing faces
-3. Connect barycenters of adjacent tetrahedra to form Voronoi edges
+Planned features:
+- 3D Voronoi diagram generation and visualization
+- Export functionality (OBJ, PLY formats)
+- Performance optimizations for larger point sets
+- Additional geometric algorithms from Geogram
 
-### Periodic Boundaries
-When periodic mode is enabled:
-- Points are assumed to be in the unit cube [0, 1]³
-- The space wraps around at the boundaries (toroidal topology)
-- Edges crossing boundaries are marked with `isPeriodic: true`
+## Credits
+
+- **[Geogram](https://github.com/BrunoLevy/geogram)**: Created by Bruno Levy and the ALICE project-team
+- **[Three.js](https://github.com/mrdoob/three.js)**: Created by Ricardo Cabello (Mr.doob) and contributors
+- **Development**: Assisted by Google's AI and Claude
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is open source. The Geogram library is available under its own license terms.
 
-## Acknowledgments
+---
 
-- [Geogram](https://github.com/BrunoLevy/geogram) by Bruno Levy for the computational geometry algorithms
-- [Three.js](https://github.com/mrdoob/three.js) for 3D visualization
-- [Emscripten](https://emscripten.org/) for WebAssembly compilation
+*Developed with the assistance of Google's AI and Claude (Anthropic)* 
