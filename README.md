@@ -2,7 +2,7 @@
 
 A WebAssembly-powered 3D periodic Delaunay-Voronoi triangulation library for the browser, combining the computational power of [Geogram](https://github.com/BrunoLevy/geogram) with the visualization capabilities of [Three.js](https://github.com/mrdoob/three.js).
 
-![Geogram-Three.js Demo](Geogram1.png)
+![Geogram-Three.js Demo](docs/Geogram1.png)
 
 ## Features
 
