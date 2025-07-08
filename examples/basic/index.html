@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Periodic Delaunay - Three.js Visualization</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.164.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.0/examples/jsm/"
+        }
+    }
+    </script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            width: 250px;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-size: 14px;
+        }
+        input[type="number"] {
+            width: 60px;
+        }
+        button {
+            margin: 5px 0;
+            padding: 5px 10px;
+            width: 100%;
+        }
+        .status { 
+            font-size: 12px; 
+            margin-top: 10px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>3D Periodic Delaunay Triangulation</h3>
+        <div id="stats">Loading...</div>
+    </div>
+    
+    <div id="controls">
+        <h4>Controls</h4>
+        <div class="control-group">
+            <label>Periodic Mode:</label>
+            <input type="checkbox" id="periodicMode" checked>
+        </div>
+        <div class="control-group">
+            <label>Number of Points:</label>
+            <input type="number" id="numPoints" value="50" min="4" max="200">
+        </div>
+        <div class="control-group">
+            <label>Min Distance:</label>
+            <input type="number" id="minDistance" value="0.05" min="0.01" max="0.2" step="0.01">
+        </div>
+        <hr>
+        <div class="control-group">
+            <label>Show Vertices:</label>
+            <input type="checkbox" id="showVertices" checked>
+        </div>
+        <div class="control-group">
+            <label>Show Edges:</label>
+            <input type="checkbox" id="showEdges" checked>
+        </div>
+        <div class="control-group">
+            <label>Show Tetrahedra:</label>
+            <input type="checkbox" id="showTetrahedra">
+        </div>
+        <div class="control-group">
+            <label>Show Boundary:</label>
+            <input type="checkbox" id="showBoundary" checked>
+        </div>
+        <hr>
+        <button id="regenerate">Generate New Points</button>
+        <button id="recompute">Recompute Triangulation</button>
+        <div id="status" class="status"></div>
+    </div>
+    
+    <script src="../../dist/periodic_delaunay.js"></script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        
+        let scene, camera, renderer, controls;
+        let verticesGroup, edgesGroup, tetrahedraGroup, boundaryGroup;
+        let Module;
+        let currentPoints = [];
+        let currentResult = null;
+        
+        // Initialize Three.js
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f0f0);
+            
+            camera = new THREE.PerspectiveCamera(
+                75, window.innerWidth / window.innerHeight, 0.1, 1000
+            );
+            camera.position.set(1.5, 1.5, 1.5);
+            camera.lookAt(0.5, 0.5, 0.5);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0.5, 0.5, 0.5);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Groups
+            verticesGroup = new THREE.Group();
+            edgesGroup = new THREE.Group();
+            tetrahedraGroup = new THREE.Group();
+            boundaryGroup = new THREE.Group();
+            
+            scene.add(verticesGroup);
+            scene.add(edgesGroup);
+            scene.add(tetrahedraGroup);
+            scene.add(boundaryGroup);
+            
+            // Create boundary box
+            createBoundaryBox();
+            
+            // Handle resize
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function createBoundaryBox() {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(
+                edges,
+                new THREE.LineBasicMaterial({ color: 0x333333, linewidth: 2 })
+            );
+            line.position.set(0.5, 0.5, 0.5);
+            boundaryGroup.add(line);
+            
+            // Add axes helpers
+            const axesHelper = new THREE.AxesHelper(0.2);
+            scene.add(axesHelper);
+        }
+        
+        // Generate well-distributed points
+        function generateWellDistributedPoints(count, minDist) {
+            const points = [];
+            let attempts = 0;
+            const maxAttempts = count * 1000;
+            
+            while (points.length < count && attempts < maxAttempts) {
+                attempts++;
+                const newPoint = [Math.random(), Math.random(), Math.random()];
+                
+                // Check distance to existing points
+                let tooClose = false;
+                for (const point of points) {
+                    const dx = newPoint[0] - point[0];
+                    const dy = newPoint[1] - point[1];
+                    const dz = newPoint[2] - point[2];
+                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    if (dist < minDist) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose) {
+                    points.push(newPoint);
+                }
+            }
+            
+            return points;
+        }
+        
+        // Helper function to calculate minimum image distance
+        function getMinImageDistance(p1, p2, boxSize = 1.0) {
+            let dx = p1.x - p2.x;
+            let dy = p1.y - p2.y;
+            let dz = p1.z - p2.z;
+            
+            // Store original distances
+            const origDx = dx;
+            const origDy = dy;
+            const origDz = dz;
+            
+            // Apply periodic boundary conditions
+            if (dx > boxSize / 2) dx -= boxSize;
+            else if (dx < -boxSize / 2) dx += boxSize;
+            
+            if (dy > boxSize / 2) dy -= boxSize;
+            else if (dy < -boxSize / 2) dy += boxSize;
+            
+            if (dz > boxSize / 2) dz -= boxSize;
+            else if (dz < -boxSize / 2) dz += boxSize;
+            
+            // Check if any coordinate wrapped
+            const wrapped = (dx !== origDx) || (dy !== origDy) || (dz !== origDz);
+            
+            return {
+                distance: Math.sqrt(dx*dx + dy*dy + dz*dz),
+                wrapped: wrapped,
+                dx: dx,
+                dy: dy,
+                dz: dz
+            };
+        }
+        
+        // Filter tetrahedra to remove those with invalid vertex indices
+        function filterTetrahedra(rawResult) {
+            const filtered = [];
+            const numVertices = currentPoints.length / 3;
+            
+            let invalidCount = 0;
+            
+            for (const tet of rawResult) {
+                // Check if all vertex indices are valid (non-negative and within bounds)
+                const v0 = tet[0];
+                const v1 = tet[1];
+                const v2 = tet[2];
+                const v3 = tet[3];
+                
+                if (v0 >= 0 && v0 < numVertices &&
+                    v1 >= 0 && v1 < numVertices &&
+                    v2 >= 0 && v2 < numVertices &&
+                    v3 >= 0 && v3 < numVertices) {
+                    filtered.push(tet);
+                } else {
+                    invalidCount++;
+                }
+            }
+            
+            if (invalidCount > 0) {
+                console.log(`Filtered out ${invalidCount} tetrahedra with invalid vertex indices`);
+            }
+            
+            return filtered;
+        }
+        
+        // Visualize vertices
+        function visualizeVertices() {
+            verticesGroup.clear();
+            
+            const geometry = new THREE.SphereGeometry(0.015, 16, 16);
+            const material = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+            
+            for (let i = 0; i < currentPoints.length; i += 3) {
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(
+                    currentPoints[i],
+                    currentPoints[i + 1],
+                    currentPoints[i + 2]
+                );
+                verticesGroup.add(sphere);
+            }
+        }
+        
+        // Visualize edges
+        function visualizeEdges() {
+            edgesGroup.clear();
+            
+            if (!currentResult || currentResult.length === 0) return;
+            
+            const edgeSet = new Set();
+            const material = new THREE.LineBasicMaterial({ color: 0x0066ff });
+            const periodicMaterial = new THREE.LineBasicMaterial({ 
+                color: 0xff6600, 
+                linewidth: 2 
+            });
+            
+            // Extract unique edges from tetrahedra
+            for (const tet of currentResult) {
+                const edges = [
+                    [tet[0], tet[1]], [tet[0], tet[2]], [tet[0], tet[3]],
+                    [tet[1], tet[2]], [tet[1], tet[3]], [tet[2], tet[3]]
+                ];
+                
+                for (const [a, b] of edges) {
+                    const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+                    if (!edgeSet.has(key)) {
+                        edgeSet.add(key);
+                        
+                        // Get vertex positions
+                        const p1 = new THREE.Vector3(
+                            currentPoints[a * 3],
+                            currentPoints[a * 3 + 1],
+                            currentPoints[a * 3 + 2]
+                        );
+                        const p2 = new THREE.Vector3(
+                            currentPoints[b * 3],
+                            currentPoints[b * 3 + 1],
+                            currentPoints[b * 3 + 2]
+                        );
+                        
+                        // Check if edge crosses periodic boundary
+                        const isPeriodic = document.getElementById('periodicMode').checked;
+                        let crossesBoundary = false;
+                        
+                        if (isPeriodic) {
+                            const minImage = getMinImageDistance(p1, p2);
+                            crossesBoundary = minImage.wrapped;
+                        }
+                        
+                        const geometry = new THREE.BufferGeometry();
+                        geometry.setFromPoints([p1, p2]);
+                        
+                        const line = new THREE.Line(
+                            geometry, 
+                            crossesBoundary ? periodicMaterial : material
+                        );
+                        edgesGroup.add(line);
+                    }
+                }
+            }
+        }
+        
+        // Visualize tetrahedra
+        function visualizeTetrahedra() {
+            tetrahedraGroup.clear();
+            
+            if (!currentResult || currentResult.length === 0) return;
+            
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00ff00,
+                opacity: 0.2,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+            
+            for (const tet of currentResult) {
+                const vertices = [];
+                for (let i = 0; i < 4; i++) {
+                    vertices.push(new THREE.Vector3(
+                        currentPoints[tet[i] * 3],
+                        currentPoints[tet[i] * 3 + 1],
+                        currentPoints[tet[i] * 3 + 2]
+                    ));
+                }
+                
+                // Create tetrahedron faces
+                const geometry = new THREE.BufferGeometry();
+                const positions = [];
+                
+                // Face indices for tetrahedron
+                const faces = [
+                    [0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]
+                ];
+                
+                for (const face of faces) {
+                    for (const idx of face) {
+                        positions.push(vertices[idx].x, vertices[idx].y, vertices[idx].z);
+                    }
+                }
+                
+                geometry.setAttribute('position', 
+                    new THREE.BufferAttribute(new Float32Array(positions), 3)
+                );
+                geometry.computeVertexNormals();
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                tetrahedraGroup.add(mesh);
+            }
+        }
+        
+        // Compute Delaunay triangulation
+        function computeDelaunay() {
+            if (!Module) return;
+            
+            const isPeriodic = document.getElementById('periodicMode').checked;
+            const numPoints = currentPoints.length / 3;
+            
+            setStatus('Computing...', false);
+            
+            try {
+                const pointsArray = new Float64Array(currentPoints);
+                const rawResult = Module.compute_delaunay(pointsArray, numPoints, isPeriodic);
+                
+                if (rawResult && rawResult.length > 0) {
+                    // Debug: log raw results
+                    console.log(`Raw tetrahedra count: ${rawResult.length}`);
+                    
+                    // Check for invalid indices
+                    let hasInvalidIndex = false;
+                    for (const tet of rawResult) {
+                        for (let i = 0; i < 4; i++) {
+                            if (tet[i] < 0 || tet[i] >= numPoints) {
+                                hasInvalidIndex = true;
+                                console.warn(`Found tetrahedron with invalid vertex index: ${tet[i]}`);
+                                break;
+                            }
+                        }
+                        if (hasInvalidIndex) break;
+                    }
+                    
+                    // Filter out invalid tetrahedra
+                    currentResult = filterTetrahedra(rawResult);
+                    
+                    setStatus(`Success! ${currentResult.length} valid tetrahedra (filtered from ${rawResult.length})`, true);
+                    updateStats();
+                    visualizeVertices();
+                    visualizeEdges();
+                    visualizeTetrahedra();
+                } else {
+                    setStatus('No tetrahedra generated', false);
+                    currentResult = null;
+                }
+            } catch (error) {
+                setStatus(`Error: ${error}`, false);
+                console.error(error);
+                currentResult = null;
+            }
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const numPoints = currentPoints.length / 3;
+            const numTets = currentResult ? currentResult.length : 0;
+            const isPeriodic = document.getElementById('periodicMode').checked;
+            
+            // Count unique edges
+            const edgeSet = new Set();
+            if (currentResult) {
+                for (const tet of currentResult) {
+                    const edges = [
+                        [tet[0], tet[1]], [tet[0], tet[2]], [tet[0], tet[3]],
+                        [tet[1], tet[2]], [tet[1], tet[3]], [tet[2], tet[3]]
+                    ];
+                    for (const [a, b] of edges) {
+                        const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+                        edgeSet.add(key);
+                    }
+                }
+            }
+            
+            document.getElementById('stats').innerHTML = `
+                <strong>Mode:</strong> ${isPeriodic ? 'Periodic' : 'Non-periodic'}<br>
+                <strong>Vertices:</strong> ${numPoints}<br>
+                <strong>Edges:</strong> ${edgeSet.size}<br>
+                <strong>Tetrahedra:</strong> ${numTets}
+            `;
+        }
+        
+        // Set status message
+        function setStatus(message, isSuccess) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${isSuccess ? 'success' : 'error'}`;
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize everything
+        // Wait for the PeriodicDelaunayModule to be available
+        window.PeriodicDelaunayModule().then(module => {
+            Module = module;
+            setStatus('Module loaded', true);
+            
+            initThree();
+            
+            // Generate initial points
+            const numPoints = parseInt(document.getElementById('numPoints').value);
+            const minDist = parseFloat(document.getElementById('minDistance').value);
+            const points = generateWellDistributedPoints(numPoints, minDist);
+            currentPoints = points.flat();
+            
+            computeDelaunay();
+            
+            // Set up event listeners
+            document.getElementById('showVertices').addEventListener('change', (e) => {
+                verticesGroup.visible = e.target.checked;
+            });
+            
+            document.getElementById('showEdges').addEventListener('change', (e) => {
+                edgesGroup.visible = e.target.checked;
+            });
+            
+            document.getElementById('showTetrahedra').addEventListener('change', (e) => {
+                tetrahedraGroup.visible = e.target.checked;
+            });
+            
+            document.getElementById('showBoundary').addEventListener('change', (e) => {
+                boundaryGroup.visible = e.target.checked;
+            });
+            
+            document.getElementById('regenerate').addEventListener('click', () => {
+                const numPoints = parseInt(document.getElementById('numPoints').value);
+                const minDist = parseFloat(document.getElementById('minDistance').value);
+                const points = generateWellDistributedPoints(numPoints, minDist);
+                currentPoints = points.flat();
+                computeDelaunay();
+            });
+            
+            document.getElementById('recompute').addEventListener('click', () => {
+                computeDelaunay();
+            });
+            
+            document.getElementById('periodicMode').addEventListener('change', () => {
+                computeDelaunay();
+            });
+            
+            animate();
+            
+        }).catch(err => {
+            console.error('Failed to load module:', err);
+            setStatus('Failed to load module', false);
+        });
+    </script>
+</body>
+</html> 
