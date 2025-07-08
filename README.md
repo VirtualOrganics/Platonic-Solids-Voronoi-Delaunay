@@ -6,8 +6,8 @@ A high-performance JavaScript library and visualization tool for 3D computationa
 
 🎮 **[Try the Live Demo](https://virtualorganics.github.io/Geogram-Three.js/examples/basic/)**
 
-<p align="center">
-  <img src="docs/Geogram1.png" alt="3D Periodic Delaunay Triangulation" width="33%">
+<p align="left">
+  <img src="docs/Geogram1.png" alt="3D Periodic Delaunay Triangulation" width="50%">
 </p>
 
 This project provides a working implementation of a **Periodic 3D Delaunay Triangulation**, a feature not commonly available in standard JavaScript libraries.
@@ -23,9 +23,10 @@ This project provides a working implementation of a **Periodic 3D Delaunay Trian
 - 🛠️ Clean interface for future expansion (e.g., Voronoi diagrams)
 
 ## Screenshots
-
-![Periodic Delaunay Triangulation](docs/screenshot.png)
-*3D Periodic Delaunay triangulation with 500 vertices showing periodic edges in orange*
+<p align="left">
+  <img src="docs/screenshot.png" alt="3D Periodic Delaunay Triangulation" width="50%">
+</p>
+*3D Periodic Delaunay triangulation with 500 vertices*
 
 ## How to Run
 
