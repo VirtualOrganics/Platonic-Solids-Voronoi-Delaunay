@@ -104,6 +104,22 @@
             <label>Tetra Color:</label>
             <input type="color" id="tetraColor" value="#00ff00">
         </div>
+        <div class="control-group">
+            <label>Face Color:</label>
+            <input type="color" id="faceColor" value="#4444ff">
+        </div>
+        <div class="control-group">
+            <label>Face Opacity:</label>
+            <input type="number" id="faceOpacity" value="0.3" min="0.1" max="1.0" step="0.1">
+        </div>
+        <div class="control-group">
+            <label>Voronoi Face Color:</label>
+            <input type="color" id="voronoiFaceColor" value="#ff8800">
+        </div>
+        <div class="control-group">
+            <label>Voronoi Face Opacity:</label>
+            <input type="number" id="voronoiFaceOpacity" value="0.3" min="0.1" max="1.0" step="0.1">
+        </div>
         <hr>
         <div class="control-group">
             <label>Show Vertices:</label>
@@ -125,21 +141,30 @@
             <label>Show Boundary:</label>
             <input type="checkbox" id="showBoundary" checked>
         </div>
+        <div class="control-group">
+            <label>Show Faces:</label>
+            <input type="checkbox" id="showFaces" checked>
+        </div>
+        <div class="control-group">
+            <label>Show Voronoi Faces:</label>
+            <input type="checkbox" id="showVoronoiFaces" checked>
+        </div>
         <hr>
         <button id="regenerate">Generate New Points</button>
         <button id="recompute">Recompute Triangulation</button>
         <div id="status" class="status"></div>
     </div>
     
-    <script src="./periodic_delaunay.js"></script>
+    <script src="dist/periodic_delaunay.js"></script>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { DelaunayComputation } from './DelaunayComputation.js';
+        import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
+        import { DelaunayComputation } from './src/js/DelaunayComputation.js';
         import PoissonDiskSampling from 'poisson-disk-sampling';
         
         let scene, camera, renderer, controls;
-        let verticesGroup, delaunayGroup, voronoiGroup, tetrahedraGroup, boundaryGroup;
+        let verticesGroup, delaunayGroup, voronoiGroup, tetrahedraGroup, boundaryGroup, facesGroup, voronoiFacesGroup;
         let Module;
         let currentPoints = [];
         let computation = null;
@@ -177,12 +202,16 @@
             voronoiGroup = new THREE.Group();
             tetrahedraGroup = new THREE.Group();
             boundaryGroup = new THREE.Group();
+            facesGroup = new THREE.Group();
+            voronoiFacesGroup = new THREE.Group();
             
             scene.add(verticesGroup);
             scene.add(delaunayGroup);
             scene.add(voronoiGroup);
             scene.add(tetrahedraGroup);
             scene.add(boundaryGroup);
+            scene.add(facesGroup);
+            scene.add(voronoiFacesGroup);
             
             // Create boundary box
             createBoundaryBox();
@@ -380,7 +409,7 @@
                 linewidth: 2 
             });
             const periodicMaterial = new THREE.LineBasicMaterial({ 
-                color: voronoiColorInt,
+                color: voronoiColorInt, 
                 linewidth: 2,
                 opacity: 0.8,
                 transparent: true
@@ -417,10 +446,103 @@
             }
         }
         
+        // Draw Voronoi faces
+        function drawVoronoiFaces(computation) {
+            voronoiFacesGroup.clear();
+            
+            if (!computation.tetrahedra.length || !computation.barycenters.length) return;
+            
+            const voronoiFaceColorHex = document.getElementById('voronoiFaceColor').value;
+            const voronoiFaceColorInt = parseInt(voronoiFaceColorHex.substring(1), 16);
+            const opacity = parseFloat(document.getElementById('voronoiFaceOpacity').value);
+            
+            const material = new THREE.MeshPhongMaterial({
+                color: voronoiFaceColorInt,
+                opacity: opacity,
+                transparent: true,
+                side: THREE.DoubleSide,
+                depthWrite: false // Important for transparent objects
+            });
+            
+            // Map each original vertex to the barycenters of tetrahedra that contain it
+            const cells = new Map();
+            computation.tetrahedra.forEach((tet, index) => {
+                const barycenter = computation.barycenters[index];
+                if (!barycenter) return;
+
+                tet.forEach(vertexIndex => {
+                    if (!cells.has(vertexIndex)) {
+                        cells.set(vertexIndex, []);
+                    }
+                    cells.get(vertexIndex).push(new THREE.Vector3(...barycenter));
+                });
+            });
+
+            // For each cell, compute the convex hull of its vertices (the barycenters)
+            cells.forEach((cellVertices) => {
+                if (cellVertices.length < 4) return; // Need at least 4 points for a 3D shape
+
+                // Create a convex geometry from the vertices of the Voronoi cell
+                const geometry = new ConvexGeometry(cellVertices);
+                const mesh = new THREE.Mesh(geometry, material);
+                voronoiFacesGroup.add(mesh);
+            });
+        }
+
+        // Draw faces
+        function drawFaces(computation) {
+            facesGroup.clear();
+            
+            if (!computation.tetrahedra.length) return;
+            
+            const faceColorHex = document.getElementById('faceColor').value;
+            const faceColorInt = parseInt(faceColorHex.substring(1), 16);
+            const opacity = parseFloat(document.getElementById('faceOpacity').value);
+            
+            const material = new THREE.MeshPhongMaterial({
+                color: faceColorInt,
+                opacity: opacity,
+                transparent: true,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+            
+            // Create faces from tetrahedra
+            for (const tet of computation.tetrahedra) {
+                // Each tetrahedron has 4 triangular faces
+                const faces = [
+                    [tet[0], tet[1], tet[2]],
+                    [tet[0], tet[1], tet[3]],
+                    [tet[0], tet[2], tet[3]],
+                    [tet[1], tet[2], tet[3]]
+                ];
+                
+                for (const face of faces) {
+                    const vertices = face.map(i => computation.pointsArray[i]);
+                    const geometry = new THREE.BufferGeometry();
+                    const positions = [];
+                    
+                    for (const vertex of vertices) {
+                        positions.push(vertex[0], vertex[1], vertex[2]);
+                    }
+                    
+                    geometry.setAttribute('position', 
+                        new THREE.Float32BufferAttribute(positions, 3)
+                    );
+                    geometry.computeVertexNormals();
+                    
+                    const mesh = new THREE.Mesh(geometry, material);
+                    facesGroup.add(mesh);
+                }
+            }
+        }
+        
         // Unified mesh drawing function that properly handles periodic edges
         function drawMeshes(computation) {
             delaunayGroup.clear();
             voronoiGroup.clear();
+            facesGroup.clear();
+            voronoiFacesGroup.clear();
 
             console.log(`Drawing meshes for ${computation.isPeriodic ? 'PERIODIC' : 'NON-PERIODIC'} mode`);
 
@@ -683,6 +805,7 @@
                 drawVertices(computation);
                 drawMeshes(computation);
                 drawTetrahedra(computation);
+                drawVoronoiFaces(computation); // Ensure this is called
                 
                 updateStats();
                 
@@ -756,6 +879,31 @@
             
             document.getElementById('showBoundary').addEventListener('change', (e) => {
                 boundaryGroup.visible = e.target.checked;
+            });
+
+            // Add event listeners for face controls
+            document.getElementById('faceColor').addEventListener('change', () => {
+                drawFaces(computation);
+            });
+            
+            document.getElementById('faceOpacity').addEventListener('change', () => {
+                drawFaces(computation);
+            });
+            
+            document.getElementById('showFaces').addEventListener('change', (e) => {
+                facesGroup.visible = e.target.checked;
+            });
+            
+            document.getElementById('voronoiFaceColor').addEventListener('change', () => {
+                drawVoronoiFaces(computation);
+            });
+            
+            document.getElementById('voronoiFaceOpacity').addEventListener('change', () => {
+                drawVoronoiFaces(computation);
+            });
+            
+            document.getElementById('showVoronoiFaces').addEventListener('change', (e) => {
+                voronoiFacesGroup.visible = e.target.checked;
             });
             
             document.getElementById('regenerate').addEventListener('click', () => {
