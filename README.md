@@ -2,6 +2,14 @@
 
 A high-performance JavaScript library and visualization tool for 3D computational geometry in the browser, powered by the Geogram C++ library (via WebAssembly) and rendered with Three.js.
 
+## Live Demo
+
+🎮 **[Try the Live Demo](https://virtualorganics.github.io/Geogram-Three.js/examples/basic/)**
+
+<p align="center">
+  <img src="docs/Geogram1.png" alt="3D Periodic Delaunay Triangulation" width="33%">
+</p>
+
 This project provides a working implementation of a **Periodic 3D Delaunay Triangulation**, a feature not commonly available in standard JavaScript libraries.
 
 ## Features
@@ -13,10 +21,6 @@ This project provides a working implementation of a **Periodic 3D Delaunay Trian
 - 🎯 Well-distributed point generation with minimum distance constraints
 - 🔍 Visual distinction for periodic boundary-crossing edges
 - 🛠️ Clean interface for future expansion (e.g., Voronoi diagrams)
-
-## Live Demo
-
-🎮 **[Try the Live Demo](https://virtualorganics.github.io/Geogram-Three.js/examples/basic/)**
 
 ## Screenshots
 
