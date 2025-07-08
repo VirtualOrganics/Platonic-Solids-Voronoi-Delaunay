@@ -110,11 +110,11 @@
         <div id="status" class="status"></div>
     </div>
     
-    <script src="dist/periodic_delaunay.js"></script>
+    <script src="periodic_delaunay.js"></script>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { DelaunayComputation } from './src/js/DelaunayComputation.js';
+        import { DelaunayComputation } from './DelaunayComputation.js';
         import PoissonDiskSampling from 'poisson-disk-sampling';
         
         let scene, camera, renderer, controls;
