@@ -1,8 +1,11 @@
 # Geogram-Three.js
 
+[Live Demo](https://virtualorganics.github.io/Geogram-Three.js/)
+
 A WebAssembly-powered 3D periodic Delaunay-Voronoi triangulation library for the browser, combining the computational power of [Geogram](https://github.com/BrunoLevy/geogram) with the visualization capabilities of [Three.js](https://github.com/mrdoob/three.js).
 
-![Geogram-Three.js Demo](docs/Geogram1.png)
+<img src="docs/Geogram1.png" alt="Geogram-Three.js Demo" width="33%">
+<img src="docs/screenshot.png" alt="Screenshot" width="33%">
 
 ## Features
 
@@ -12,10 +15,6 @@ A WebAssembly-powered 3D periodic Delaunay-Voronoi triangulation library for the
 - **WebAssembly Performance**: Native-speed computation in the browser
 - **Three.js Visualization**: Interactive 3D rendering with orbit controls
 - **Clean JavaScript API**: Simple, promise-based interface hiding WASM complexity
-
-## Demo
-
-[Live Demo](https://virtualorganics.github.io/Geogram-Three.js/)
 
 ## Quick Start
 
