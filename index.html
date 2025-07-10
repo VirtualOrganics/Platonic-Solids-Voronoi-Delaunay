@@ -147,8 +147,8 @@
                     <input type="checkbox" id="showGhostCells">
                 </div>
                 <div class="control-group">
-                    <label>MIC Visualization:</label>
-                    <input type="checkbox" id="useMIC" checked>
+                    <label>MIC<br>Visualization:</label>
+                    <input type="checkbox" id="useMIC">
                 </div>
             </div>
             <div class="control-row">
@@ -190,7 +190,7 @@
             <div class="control-row">
                 <div class="control-group">
                     <label>Edge Width:</label>
-                    <input type="number" id="delaunayEdgeWidth" value="1.5" min="0.01" max="5" step="0.01">
+                    <input type="number" id="delaunayEdgeWidth" value="2" min="1" max="5" step="1">
                 </div>
                 <div class="control-group">
                     <label>Edge Color:</label>
@@ -230,23 +230,23 @@
                 </div>
                 <div class="control-group">
                     <label>Point Color:</label>
-                    <input type="color" id="voronoiVertexColor" value="#0000FF">
+                    <input type="color" id="voronoiVertexColor" value="#CCCCCC">
                 </div>
             </div>
             <div class="control-row">
                 <div class="control-group">
                     <label>Edge Width:</label>
-                    <input type="number" id="voronoiEdgeWidth" value="4" min="0.01" max="5" step="0.01">
+                    <input type="number" id="voronoiEdgeWidth" value="3" min="1" max="5" step="1">
                 </div>
                 <div class="control-group">
                     <label>Edge Color:</label>
-                    <input type="color" id="voronoiEdgeColor" value="#FFFFFF">
+                    <input type="color" id="voronoiEdgeColor" value="#000000">
                 </div>
             </div>
             <div class="control-row">
                 <div class="control-group">
                     <label>Face Color:</label>
-                    <input type="color" id="voronoiFaceColor" value="#ADD8E6">
+                    <input type="color" id="voronoiFaceColor" value="#32CD32">
                 </div>
                 <div class="control-group">
                     <label>Face Opacity:</label>
@@ -265,6 +265,9 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
+        import { Line2 } from 'three/addons/lines/Line2.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+        import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
         import { DelaunayComputation } from './src/js/DelaunayComputation.js';
         import PoissonDiskSampling from 'poisson-disk-sampling';
         
@@ -278,7 +281,7 @@
         // Initialize Three.js
         function initThree() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xd0d0d0);
+            scene.background = new THREE.Color(0xAAAAAA);
             
             camera = new THREE.PerspectiveCamera(
                 75, window.innerWidth / window.innerHeight, 0.1, 1000
@@ -336,6 +339,18 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Update resolution for LineMaterial
+            delaunayGroup.children.forEach(child => {
+                if (child.material && child.material.isLineMaterial) {
+                    child.material.resolution.set(window.innerWidth, window.innerHeight);
+                }
+            });
+            voronoiGroup.children.forEach(child => {
+                if (child.material && child.material.isLineMaterial) {
+                    child.material.resolution.set(window.innerWidth, window.innerHeight);
+                }
+            });
         }
         
         function createBoundaryBox() {
@@ -440,32 +455,11 @@
             return [p1[0] + dx, p1[1] + dy, p1[2] + dz];
         }
 
-        // Helper function to create lines with proper width support using cylinder geometry
-        function createThickLine(start, end, width, material) {
-            const direction = new THREE.Vector3().subVectors(end, start);
-            const length = direction.length();
-            
-            if (length === 0) return null;
-            
-            // Scale width appropriately - for very small values like 0.01, we need smaller cylinders
-            const radius = width * 0.0005; // Reduced scaling for better thin line support
-            const geometry = new THREE.CylinderGeometry(radius, radius, length, 6); // Reduced segments for performance
-            const mesh = new THREE.Mesh(geometry, material);
-            
-            // Position the cylinder at the midpoint
-            mesh.position.copy(start).add(end).multiplyScalar(0.5);
-            
-            // Rotate the cylinder to align with the direction
-            mesh.lookAt(end);
-            mesh.rotateX(Math.PI / 2);
-            
-            return mesh;
-        }
-
-        // NEW: Thick line functions for edge width support
+        // NEW: Simple line functions for better performance (width parameter kept for compatibility)
         function createDelaunayEdgesThick(computation, width, material) {
             const delaunayEdgeSet = new Set();
-            
+            const positions = [];
+
             for (const tet of computation.tetrahedra) {
                 const edges = [
                     [tet[0], tet[1]], [tet[0], tet[2]], [tet[0], tet[3]], 
@@ -482,61 +476,72 @@
                         
                         if (computation.isPeriodic) {
                             const p2_mic = getMinimumImage(p1, p2);
-                            const thickLine = createThickLine(
-                                new THREE.Vector3(...p1), 
-                                new THREE.Vector3(...p2_mic), 
-                                width, 
-                                material
-                            );
-                            if (thickLine) delaunayGroup.add(thickLine);
+                            positions.push(p1[0], p1[1], p1[2]);
+                            positions.push(p2_mic[0], p2_mic[1], p2_mic[2]);
                         } else {
-                            const thickLine = createThickLine(
-                                new THREE.Vector3(...p1), 
-                                new THREE.Vector3(...p2), 
-                                width, 
-                                material
-                            );
-                            if (thickLine) delaunayGroup.add(thickLine);
+                            positions.push(p1[0], p1[1], p1[2]);
+                            positions.push(p2[0], p2[1], p2[2]);
                         }
                     }
                 }
             }
+
+            if (positions.length === 0) return;
+
+            const geometry = new LineGeometry();
+            geometry.setPositions(positions);
+
+            const lineMaterial = new LineMaterial({
+                color: material.color.getHex(),
+                linewidth: width,
+                resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+                linecap: 'square',
+                linejoin: 'miter'
+            });
+
+            const line = new Line2(geometry, lineMaterial);
+            line.computeLineDistances();
+            delaunayGroup.add(line);
         }
 
         function createVoronoiEdgesThick(computation, width, material) {
             if (computation.voronoiEdges.length === 0) return;
             
+            const positions = [];
             for (const edge of computation.voronoiEdges) {
                 const p1 = edge.start;
                 const p2 = edge.end;
                 
                 if (computation.isPeriodic) {
                     const p2_mic = getMinimumImage(p1, p2);
-                    const thickLine = createThickLine(
-                        new THREE.Vector3(...p1), 
-                        new THREE.Vector3(...p2_mic), 
-                        width, 
-                        material
-                    );
-                    if (thickLine) voronoiGroup.add(thickLine);
+                    positions.push(p1[0], p1[1], p1[2]);
+                    positions.push(p2_mic[0], p2_mic[1], p2_mic[2]);
                 } else {
-                    const thickLine = createThickLine(
-                        new THREE.Vector3(...p1), 
-                        new THREE.Vector3(...p2), 
-                        width, 
-                        material
-                    );
-                    if (thickLine) voronoiGroup.add(thickLine);
+                    positions.push(p1[0], p1[1], p1[2]);
+                    positions.push(p2[0], p2[1], p2[2]);
                 }
             }
+
+            const geometry = new LineGeometry();
+            geometry.setPositions(positions);
+
+            const lineMaterial = new LineMaterial({
+                color: material.color.getHex(),
+                linewidth: width,
+                resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+                linecap: 'square',
+                linejoin: 'miter'
+            });
+
+            const line = new Line2(geometry, lineMaterial);
+            line.computeLineDistances();
+            voronoiGroup.add(line);
         }
 
         // NEW: MIC-based edge drawing function (Phase 2 implementation)
         function createDelaunayEdgesMIC(computation) {
             const points = [];
             const delaunayEdgeSet = new Set();
-            let periodicEdgeCount = 0;
-            let regularEdgeCount = 0;
             
             // Extract unique edges from tetrahedra
             for (const tet of computation.tetrahedra) {
@@ -554,21 +559,10 @@
                         const p2 = computation.pointsArray[b];
                         
                         if (computation.isPeriodic) {
-                            // Apply MIC: calculate minimum image of p2 relative to p1
                             const p2_mic = getMinimumImage(p1, p2);
-                            const isPeriodic = (p2_mic[0] !== p2[0] || p2_mic[1] !== p2[1] || p2_mic[2] !== p2[2]);
-                            
-                            if (isPeriodic) {
-                                periodicEdgeCount++;
-                            } else {
-                                regularEdgeCount++;
-                            }
-                            
-                            // Draw single line from p1 to minimum image of p2
                             points.push(p1[0], p1[1], p1[2]);
                             points.push(p2_mic[0], p2_mic[1], p2_mic[2]);
                         } else {
-                            // Non-periodic: draw direct line
                             points.push(p1[0], p1[1], p1[2]);
                             points.push(p2[0], p2[1], p2[2]);
                         }
@@ -576,12 +570,8 @@
                 }
             }
             
-            console.log(`MIC: Drew ${periodicEdgeCount} periodic edges and ${regularEdgeCount} regular edges (total: ${delaunayEdgeSet.size})`);
-            
-            // Create single efficient geometry
             const geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-            
             return geometry;
         }
 
@@ -590,21 +580,12 @@
             if (computation.voronoiEdges.length === 0) return null;
             
             const points = [];
-            let periodicEdgeCount = 0;
-            
             for (const edge of computation.voronoiEdges) {
                 const p1 = edge.start;
                 const p2 = edge.end;
                 
                 if (computation.isPeriodic) {
-                    // Apply MIC for Voronoi edges too
                     const p2_mic = getMinimumImage(p1, p2);
-                    const isPeriodic = (p2_mic[0] !== p2[0] || p2_mic[1] !== p2[1] || p2_mic[2] !== p2[2]);
-                    
-                    if (isPeriodic) {
-                        periodicEdgeCount++;
-                    }
-                    
                     points.push(p1[0], p1[1], p1[2]);
                     points.push(p2_mic[0], p2_mic[1], p2_mic[2]);
                 } else {
@@ -613,12 +594,9 @@
                 }
             }
             
-            console.log(`MIC Voronoi: Drew ${periodicEdgeCount} periodic edges out of ${computation.voronoiEdges.length} total`);
-            
             const geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-            
-                        return geometry;
+            return geometry;
         }
 
         // NEW: Generate stable random colors for Voronoi cells
@@ -940,13 +918,6 @@
             console.log(`Legacy: Drew ${periodicEdgeCount} periodic edges (clipped), ${regularEdgeCount} regular edges`);
         }
 
-        // NEW: Legacy drawing with proper width support for all line thicknesses
-        function drawMeshesLegacyThick(computation, delaunayMaterial, voronoiMaterial, delaunayWidth, voronoiWidth, delaunayThickMaterial, voronoiThickMaterial) {
-            // Always use cylinder geometry for proper width support (including very thin lines)
-            createDelaunayEdgesThick(computation, delaunayWidth, delaunayThickMaterial);
-            createVoronoiEdgesThick(computation, voronoiWidth, voronoiThickMaterial);
-        }
-
         // Visualize vertices
         function drawVertices(computation) {
             verticesGroup.clear();
@@ -1160,35 +1131,41 @@
             voronoiFacesGroup.clear();
 
             const useMIC = document.getElementById('useMIC').checked;
-            const methodName = useMIC ? 'MIC' : 'Legacy Clipping';
-            console.log(`Drawing meshes for ${computation.isPeriodic ? `PERIODIC (${methodName})` : 'NON-PERIODIC'} mode`);
-
-            const delaunayEdgeColorHex = document.getElementById('delaunayEdgeColor').value;
-            const delaunayEdgeColorInt = parseInt(delaunayEdgeColorHex.substring(1), 16);
-            const delaunayEdgeWidth = parseFloat(document.getElementById('delaunayEdgeWidth').value);
-            // Use cylinder geometry for thick lines when width > 1
-            const useThickLines = delaunayEdgeWidth > 1 || parseFloat(document.getElementById('voronoiEdgeWidth').value) > 1;
-            const delaunayMaterial = new THREE.LineBasicMaterial({ color: delaunayEdgeColorInt });
-            const delaunayThickMaterial = new THREE.MeshBasicMaterial({ color: delaunayEdgeColorInt });
-
-            const voronoiEdgeColorHex = document.getElementById('voronoiEdgeColor').value;
-            const voronoiEdgeColorInt = parseInt(voronoiEdgeColorHex.substring(1), 16);
-            const voronoiEdgeWidth = parseFloat(document.getElementById('voronoiEdgeWidth').value);
-            const voronoiMaterial = new THREE.LineBasicMaterial({ color: voronoiEdgeColorInt });
-            const voronoiThickMaterial = new THREE.MeshBasicMaterial({ color: voronoiEdgeColorInt });
             
+            // Toggle UI based on MIC mode
+            document.getElementById('delaunayEdgeWidth').disabled = !useMIC;
+            document.getElementById('voronoiEdgeWidth').disabled = !useMIC;
+
             if (useMIC) {
-                // --- Draw using MIC (Minimum Image Convention) ---
-                // Always use cylinder geometry for proper width support (including thin lines like 0.01)
-                createDelaunayEdgesThick(computation, delaunayEdgeWidth, delaunayThickMaterial);
-                createVoronoiEdgesThick(computation, voronoiEdgeWidth, voronoiThickMaterial);
+                // --- Draw using Thick Line (MIC) mode ---
+                const delaunayEdgeColorHex = document.getElementById('delaunayEdgeColor').value;
+                const delaunayEdgeColorInt = parseInt(delaunayEdgeColorHex.substring(1), 16);
+                const delaunayEdgeWidth = parseFloat(document.getElementById('delaunayEdgeWidth').value);
+                const delaunayMaterial = new THREE.LineBasicMaterial({ color: delaunayEdgeColorInt });
+                createDelaunayEdgesThick(computation, delaunayEdgeWidth, delaunayMaterial);
+
+                const voronoiEdgeColorHex = document.getElementById('voronoiEdgeColor').value;
+                const voronoiEdgeColorInt = parseInt(voronoiEdgeColorHex.substring(1), 16);
+                const voronoiEdgeWidth = parseFloat(document.getElementById('voronoiEdgeWidth').value);
+                const voronoiMaterial = new THREE.LineBasicMaterial({ color: voronoiEdgeColorInt });
+                createVoronoiEdgesThick(computation, voronoiEdgeWidth, voronoiMaterial);
+
             } else {
-                // --- Draw using Legacy Boundary Clipping (for comparison) ---
-                // Always use cylinder geometry for proper width support (including thin lines like 0.01)
-                drawMeshesLegacyThick(computation, delaunayMaterial, voronoiMaterial, delaunayEdgeWidth, voronoiEdgeWidth, delaunayThickMaterial, voronoiThickMaterial);
+                // --- Draw using Normal, Thin Line mode ---
+                const delaunayGeom = createDelaunayEdgesMIC(computation);
+                if (delaunayGeom) {
+                    const delaunayMaterial = new THREE.LineBasicMaterial({ color: document.getElementById('delaunayEdgeColor').value });
+                    delaunayGroup.add(new THREE.LineSegments(delaunayGeom, delaunayMaterial));
+                }
+
+                const voronoiGeom = createVoronoiEdgesMIC(computation);
+                if (voronoiGeom) {
+                    const voronoiMaterial = new THREE.LineBasicMaterial({ color: document.getElementById('voronoiEdgeColor').value });
+                    voronoiGroup.add(new THREE.LineSegments(voronoiGeom, voronoiMaterial));
+                }
             }
             
-            // Draw Voronoi vertices (barycenters)
+            // Voronoi vertices are drawn in both modes
             const voronoiVertexSize = parseFloat(document.getElementById('voronoiSize').value);
             const voronoiVertexColorHex = document.getElementById('voronoiVertexColor').value;
             const voronoiVertexColorInt = parseInt(voronoiVertexColorHex.substring(1), 16);
@@ -1446,7 +1423,7 @@
             // NEW: Event listeners for MIC and Ghost Cell controls
             document.getElementById('useMIC').addEventListener('change', () => {
                 drawMeshes(computation);
-                createGhostCellTiling(); // Refresh ghost cells too
+                createGhostCellTiling();
             });
             
             document.getElementById('showGhostCells').addEventListener('change', () => {
@@ -1491,5 +1468,4 @@
         });
     </script>
 </body>
-</html> 
 </html> 
