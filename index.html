@@ -31,23 +31,69 @@
             padding: 15px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            width: 250px;
+            width: 320px;
+            transition: transform 0.3s ease;
+        }
+        #controls.hidden {
+            transform: translateX(calc(100% - 40px));
+        }
+        #controls-toggle {
+            position: absolute;
+            left: -40px;
+            top: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px 0 0 5px;
+            padding: 10px 8px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: -2px 2px 5px rgba(0,0,0,0.2);
+        }
+        #controls-content {
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
         .control-group {
-            margin: 10px 0;
+            margin: 8px 0;
+        }
+        .control-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .control-row .control-group {
+            flex: 1;
+            margin: 0;
         }
         label {
             display: inline-block;
-            width: 120px;
-            font-size: 14px;
+            width: 110px;
+            font-size: 13px;
+        }
+        .control-row label {
+            width: 80px;
         }
         input[type="number"] {
-            width: 60px;
+            width: 55px;
+        }
+        input[type="color"] {
+            width: 30px;
+            height: 25px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
         }
         button {
             margin: 5px 0;
             padding: 5px 10px;
             width: 100%;
+        }
+        .section-header {
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #ccc;
+            font-size: 14px;
         }
         .status { 
             font-size: 12px; 
@@ -66,106 +112,145 @@
     </div>
     
     <div id="controls">
-        <h4>Controls</h4>
-        <div class="control-group">
-            <label>Periodic Mode:</label>
-            <input type="checkbox" id="periodicMode">
+        <button id="controls-toggle">⚙️</button>
+        <div id="controls-content">
+            <div class="section-header">📊 Generation</div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Points:</label>
+                    <input type="number" id="numPoints" value="150" min="4" max="200">
+                </div>
+                <div class="control-group">
+                    <label>Min Dist:</label>
+                    <input type="number" id="minDistance" value="0.05" min="0.01" max="0.2" step="0.01">
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Periodic Mode:</label>
+                    <input type="checkbox" id="periodicMode">
+                </div>
+                <div class="control-group">
+                    <label>Poisson Sampling:</label>
+                    <input type="checkbox" id="poissonSampling" checked>
+                </div>
+            </div>
+            
+            <div class="section-header">🔵 Delaunay</div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Point Size:</label>
+                    <input type="number" id="delaunaySize" value="0.005" min="0.005" max="0.05" step="0.005">
+                </div>
+                <div class="control-group">
+                    <label>Point Color:</label>
+                    <input type="color" id="vertexColor" value="#000000">
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Edge Width:</label>
+                    <input type="number" id="delaunayEdgeWidth" value="1" min="1" max="5" step="1">
+                </div>
+                <div class="control-group">
+                    <label>Edge Color:</label>
+                    <input type="color" id="delaunayEdgeColor" value="#808080">
+                </div>
+            </div>
+            
+            <div class="section-header">🔴 Voronoi</div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Point Size:</label>
+                    <input type="number" id="voronoiSize" value="0.005" min="0.005" max="0.05" step="0.005">
+                </div>
+                <div class="control-group">
+                    <label>Point Color:</label>
+                    <input type="color" id="voronoiVertexColor" value="#0000FF">
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Edge Width:</label>
+                    <input type="number" id="voronoiEdgeWidth" value="1" min="1" max="5" step="1">
+                </div>
+                <div class="control-group">
+                    <label>Edge Color:</label>
+                    <input type="color" id="voronoiEdgeColor" value="#4169E1">
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Face Color:</label>
+                    <input type="color" id="voronoiFaceColor" value="#ADD8E6">
+                </div>
+                <div class="control-group">
+                    <label>Face Opacity:</label>
+                    <input type="number" id="voronoiFaceOpacity" value="0.04" min="0.0" max="1.0" step="0.01">
+                </div>
+            </div>
+            
+            <div class="section-header">🟡 Tetrahedra</div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Color:</label>
+                    <input type="color" id="tetraColor" value="#D3D3D3">
+                </div>
+                <div class="control-group">
+                    <label>Opacity:</label>
+                    <input type="number" id="tetraOpacity" value="0.01" min="0.0" max="1.0" step="0.01">
+                </div>
+            </div>
+            
+            <div class="section-header">👁️ Visibility</div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Vertices:</label>
+                    <input type="checkbox" id="showVertices" checked>
+                </div>
+                <div class="control-group">
+                    <label>Delaunay:</label>
+                    <input type="checkbox" id="showDelaunay" checked>
+                </div>
+                <div class="control-group">
+                    <label>Voronoi:</label>
+                    <input type="checkbox" id="showVoronoi" checked>
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>Tetrahedra:</label>
+                    <input type="checkbox" id="showTetrahedra" checked>
+                </div>
+                <div class="control-group">
+                    <label>Boundary:</label>
+                    <input type="checkbox" id="showBoundary" checked>
+                </div>
+                <div class="control-group">
+                    <label>Voronoi Faces:</label>
+                    <input type="checkbox" id="showVoronoiFaces" checked>
+                </div>
+            </div>
+            
+            <div class="section-header">✨ Features</div>
+            <div class="control-group">
+                <label>🚀 MIC Visualization:</label>
+                <input type="checkbox" id="useMIC" checked>
+            </div>
+            <div class="control-group">
+                <label>👻 Ghost Cell Tiling:</label>
+                <input type="checkbox" id="showGhostCells">
+            </div>
+            <div class="control-group">
+                <label>🌈 Random Voronoi Colors:</label>
+                <input type="checkbox" id="randomVoronoiColors">
+            </div>
+            
+            <div class="section-header">🔄 Actions</div>
+            <button id="regenerate">Generate New Points</button>
+            <button id="recompute">Recompute Triangulation</button>
+            <div id="status" class="status"></div>
         </div>
-        <div class="control-group">
-            <label>Number of Points:</label>
-            <input type="number" id="numPoints" value="150" min="4" max="200">
-        </div>
-        <div class="control-group">
-            <label>Min Distance:</label>
-            <input type="number" id="minDistance" value="0.05" min="0.01" max="0.2" step="0.01">
-        </div>
-        <div class="control-group">
-            <label>Poisson Sampling:</label>
-            <input type="checkbox" id="poissonSampling" checked>
-        </div>
-        <hr>
-        <div class="control-group">
-            <label>Delaunay Size:</label>
-            <input type="number" id="delaunaySize" value="0.005" min="0.005" max="0.05" step="0.005">
-        </div>
-        <div class="control-group">
-            <label>Vertex Color:</label>
-            <input type="color" id="vertexColor" value="#000000">
-        </div>
-        <div class="control-group">
-            <label>Delaunay Edge Color:</label>
-            <input type="color" id="delaunayEdgeColor" value="#808080">
-        </div>
-        <div class="control-group">
-            <label>Voronoi Size:</label>
-            <input type="number" id="voronoiSize" value="0.005" min="0.005" max="0.05" step="0.005">
-        </div>
-        <div class="control-group">
-            <label>Voronoi Vertex Color:</label>
-            <input type="color" id="voronoiVertexColor" value="#0000FF">
-        </div>
-        <div class="control-group">
-            <label>Voronoi Edge Color:</label>
-            <input type="color" id="voronoiEdgeColor" value="#4169E1">
-        </div>
-        <div class="control-group">
-            <label>Tetra Color:</label>
-            <input type="color" id="tetraColor" value="#D3D3D3">
-        </div>
-        <div class="control-group">
-            <label>Tetra Opacity:</label>
-            <input type="number" id="tetraOpacity" value="0.01" min="0.0" max="1.0" step="0.01">
-        </div>
-        <div class="control-group">
-            <label>Voronoi Face Color:</label>
-            <input type="color" id="voronoiFaceColor" value="#ADD8E6">
-        </div>
-        <div class="control-group">
-            <label>Voronoi Face Opacity:</label>
-            <input type="number" id="voronoiFaceOpacity" value="0.04" min="0.0" max="1.0" step="0.01">
-        </div>
-        <hr>
-        <div class="control-group">
-            <label>Show Vertices:</label>
-            <input type="checkbox" id="showVertices" checked>
-        </div>
-        <div class="control-group">
-            <label>Show Delaunay:</label>
-            <input type="checkbox" id="showDelaunay" checked>
-        </div>
-        <div class="control-group">
-            <label>Show Voronoi:</label>
-            <input type="checkbox" id="showVoronoi" checked>
-        </div>
-        <div class="control-group">
-            <label>Show Tetrahedra:</label>
-            <input type="checkbox" id="showTetrahedra" checked>
-        </div>
-        <div class="control-group">
-            <label>Show Boundary:</label>
-            <input type="checkbox" id="showBoundary" checked>
-        </div>
-        <div class="control-group">
-            <label>Show Voronoi Faces:</label>
-            <input type="checkbox" id="showVoronoiFaces" checked>
-        </div>
-        <hr>
-        <div class="control-group">
-            <label>🚀 MIC Visualization:</label>
-            <input type="checkbox" id="useMIC" checked>
-        </div>
-        <div class="control-group">
-            <label>👻 Ghost Cell Tiling:</label>
-            <input type="checkbox" id="showGhostCells">
-        </div>
-        <div class="control-group">
-            <label>🌈 Random Voronoi Colors:</label>
-            <input type="checkbox" id="randomVoronoiColors">
-        </div>
-        <hr>
-        <button id="regenerate">Generate New Points</button>
-        <button id="recompute">Recompute Triangulation</button>
-        <div id="status" class="status"></div>
     </div>
     
     <script src="dist/periodic_delaunay.js"></script>
@@ -878,7 +963,7 @@
             }
         }
         
-        // Draw Voronoi faces with optional random colors
+        // Draw Voronoi faces with optional random colors and MIC for periodic boundaries
         function drawVoronoiFaces(computation) {
             voronoiFacesGroup.clear();
             
@@ -908,39 +993,65 @@
                     if (!cells.has(vertexIndex)) {
                         cells.set(vertexIndex, []);
                     }
-                    cells.get(vertexIndex).push(new THREE.Vector3(...barycenter));
+                    cells.get(vertexIndex).push(barycenter); // Store as array, not THREE.Vector3 yet
                 });
             });
 
-            // For each cell, compute the convex hull of its vertices (the barycenters)
+            // For each cell, compute the convex hull with MIC correction for periodic boundaries
             let cellIndex = 0;
-            cells.forEach((cellVertices, vertexIndex) => {
-                if (cellVertices.length < 4) return; // Need at least 4 points for a 3D shape
+            cells.forEach((cellBarycenters, vertexIndex) => {
+                if (cellBarycenters.length < 4) return; // Need at least 4 points for a 3D shape
 
-                // Create a convex geometry from the vertices of the Voronoi cell
-                const geometry = new ConvexGeometry(cellVertices);
+                let correctedVertices;
                 
-                // Choose material based on random color setting
-                let material;
-                if (useRandomColors) {
-                    const randomColor = generateRandomColor(vertexIndex);
-                    material = new THREE.MeshPhongMaterial({
-                        color: randomColor,
-                        opacity: opacity,
-                        transparent: true,
-                        side: THREE.DoubleSide,
-                        depthWrite: false
+                if (computation.isPeriodic && cellBarycenters.length > 0) {
+                    // Apply MIC: Use first barycenter as reference, correct others to same periodic image
+                    const reference = cellBarycenters[0];
+                    correctedVertices = cellBarycenters.map(barycenter => {
+                        if (barycenter === reference) {
+                            return new THREE.Vector3(...reference);
+                        }
+                        
+                        // Apply MIC to bring barycenter to same periodic image as reference
+                        const corrected = getMinimumImage(reference, barycenter);
+                        return new THREE.Vector3(...corrected);
                     });
                 } else {
-                    material = defaultMaterial;
+                    // Non-periodic: use barycenters as-is
+                    correctedVertices = cellBarycenters.map(barycenter => 
+                        new THREE.Vector3(...barycenter)
+                    );
                 }
-                
-                const mesh = new THREE.Mesh(geometry, material);
-                voronoiFacesGroup.add(mesh);
-                cellIndex++;
+
+                try {
+                    // Create a convex geometry from the corrected vertices of the Voronoi cell
+                    const geometry = new ConvexGeometry(correctedVertices);
+                    
+                    // Choose material based on random color setting
+                    let material;
+                    if (useRandomColors) {
+                        const randomColor = generateRandomColor(vertexIndex);
+                        material = new THREE.MeshPhongMaterial({
+                            color: randomColor,
+                            opacity: opacity,
+                            transparent: true,
+                            side: THREE.DoubleSide,
+                            depthWrite: false
+                        });
+                    } else {
+                        material = defaultMaterial;
+                    }
+                    
+                    const mesh = new THREE.Mesh(geometry, material);
+                    voronoiFacesGroup.add(mesh);
+                    cellIndex++;
+                } catch (error) {
+                    // Skip cells that can't form valid convex geometry
+                    console.warn(`Skipped Voronoi cell ${vertexIndex}: ${error.message}`);
+                }
             });
             
-            console.log(`Drew ${cellIndex} Voronoi cells ${useRandomColors ? 'with random colors' : 'with uniform color'}`);
+            console.log(`Drew ${cellIndex} Voronoi cells ${useRandomColors ? 'with random colors' : 'with uniform color'} ${computation.isPeriodic ? '(MIC corrected)' : ''}`);
         }
         
         // NEW: Unified mesh drawing function with MIC toggle
@@ -955,11 +1066,13 @@
 
             const delaunayEdgeColorHex = document.getElementById('delaunayEdgeColor').value;
             const delaunayEdgeColorInt = parseInt(delaunayEdgeColorHex.substring(1), 16);
-            const delaunayMaterial = new THREE.LineBasicMaterial({ color: delaunayEdgeColorInt });
+            const delaunayEdgeWidth = parseFloat(document.getElementById('delaunayEdgeWidth').value);
+            const delaunayMaterial = new THREE.LineBasicMaterial({ color: delaunayEdgeColorInt, linewidth: delaunayEdgeWidth });
 
             const voronoiEdgeColorHex = document.getElementById('voronoiEdgeColor').value;
             const voronoiEdgeColorInt = parseInt(voronoiEdgeColorHex.substring(1), 16);
-            const voronoiMaterial = new THREE.LineBasicMaterial({ color: voronoiEdgeColorInt, linewidth: 2 });
+            const voronoiEdgeWidth = parseFloat(document.getElementById('voronoiEdgeWidth').value);
+            const voronoiMaterial = new THREE.LineBasicMaterial({ color: voronoiEdgeColorInt, linewidth: voronoiEdgeWidth });
             
             if (useMIC) {
                 // --- Draw using MIC (Minimum Image Convention) ---
@@ -1207,6 +1320,11 @@
                 drawMeshes(computation);
             });
             
+            // NEW: Edge width controls
+            document.getElementById('delaunayEdgeWidth').addEventListener('change', () => {
+                drawMeshes(computation);
+            });
+            
             document.getElementById('voronoiSize').addEventListener('change', () => {
                 drawMeshes(computation);
             });
@@ -1216,6 +1334,11 @@
             });
 
             document.getElementById('voronoiEdgeColor').addEventListener('change', () => {
+                drawMeshes(computation);
+            });
+            
+            // NEW: Voronoi edge width control
+            document.getElementById('voronoiEdgeWidth').addEventListener('change', () => {
                 drawMeshes(computation);
             });
             
@@ -1241,6 +1364,22 @@
             document.getElementById('randomVoronoiColors').addEventListener('change', () => {
                 drawVoronoiFaces(computation);
                 createGhostCellTiling(); // Also update ghost cells
+            });
+            
+            // NEW: Control panel toggle
+            document.getElementById('controls-toggle').addEventListener('click', () => {
+                const controls = document.getElementById('controls');
+                const toggle = document.getElementById('controls-toggle');
+                
+                if (controls.classList.contains('hidden')) {
+                    controls.classList.remove('hidden');
+                    toggle.textContent = '⚙️';
+                    toggle.title = 'Hide Controls';
+                } else {
+                    controls.classList.add('hidden');
+                    toggle.textContent = '📊';
+                    toggle.title = 'Show Controls';
+                }
             });
             
             animate();
