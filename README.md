@@ -158,6 +158,32 @@ When periodic mode is enabled:
 - The space wraps around at the boundaries (toroidal topology)
 - Edges crossing boundaries are marked with `isPeriodic: true`
 
+## Controls Guide
+
+### Main Controls
+- **Points**: The number of random points to generate.
+- **Min Dist**: The minimum distance between generated points.
+- **Motion**: Controls the randomness of the point movement. Higher values result in more erratic paths.
+- **Speed**: Controls the speed at which the points travel.
+- **Live Update**: When checked, the triangulation and Voronoi diagrams continuously update to reflect point motion.
+- **Update Step**: Sets the number of frames to wait before each live update. Higher values are less intensive.
+- **Periodic**: Toggles periodic boundary conditions, making the space wrap around like a torus.
+- **Ghost Cells**: Displays the 26 neighboring "ghost" cells in periodic mode to visualize the toroidal space.
+- **Background**: Sets the background color of the scene.
+- **Poisson**: Toggles Poisson disk sampling for point generation, which creates more evenly spaced points.
+- **MIC**: Toggles the "Minimum Image Convention" visualization mode, which enables thick, adjustable edges.
+- **Boundary**: Toggles the visibility of the boundary box.
+
+### Delaunay Triangles / Tetrahedra
+- **Vertices**: Toggles the visibility of the Delaunay vertices (the input points).
+- **Delaunay**: Toggles the visibility of the Delaunay edges.
+- **Tetrahedra**: Toggles the visibility of the Delaunay tetrahedra (the 3D cells).
+
+### Voronoi Diagrams
+- **Voronoi**: Toggles the visibility of the Voronoi edges.
+- **Faces**: Toggles the visibility of the Voronoi cell faces.
+- **Random Colors**: Toggles random coloring for the Voronoi faces.
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
