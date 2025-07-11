@@ -163,13 +163,13 @@ When periodic mode is enabled:
 ### Main Controls
 - **Points**: The number of random points to generate.
 - **Min Dist**: The minimum distance between generated points.
-- **Motion**: Controls the randomness of the point movement. Higher values result in more erratic paths.
-- **Speed**: Controls the speed at which the points travel.
+- **Motion**: The randomness of the point movement. Higher values result in more erratic paths.
+- **Speed**: The speed at which the points travel.
 - **Live Update**: When checked, the triangulation and Voronoi diagrams continuously update to reflect point motion.
 - **Update Step**: Sets the number of frames to wait before each live update. Higher values are less intensive.
 - **Periodic**: Toggles periodic boundary conditions, making the space wrap around like a torus.
 - **Ghost Cells**: Displays the 26 neighboring "ghost" cells in periodic mode to visualize the toroidal space.
-- **Background**: Sets the background color of the scene.
+- **Background**: The background color of the scene.
 - **Poisson**: Toggles Poisson disk sampling for point generation, which creates more evenly spaced points.
 - **MIC**: Toggles the "Minimum Image Convention" visualization mode, which enables thick, adjustable edges.
 - **Boundary**: Toggles the visibility of the boundary box.

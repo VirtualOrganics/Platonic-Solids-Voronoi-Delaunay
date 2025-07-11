@@ -1468,6 +1468,11 @@
                 voronoiFacesGroup.visible = e.target.checked;
             });
             
+            document.getElementById('randomVoronoiColors').addEventListener('change', () => {
+                drawVoronoiFaces(computation);
+                createGhostCellTiling(); // Also update ghost cells
+            });
+            
             document.getElementById('regenerate').addEventListener('click', () => {
                 const numPoints = parseInt(document.getElementById('numPoints').value);
                 const minDist = parseFloat(document.getElementById('minDistance').value);
