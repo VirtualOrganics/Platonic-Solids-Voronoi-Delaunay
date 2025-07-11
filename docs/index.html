@@ -115,148 +115,168 @@
 <body>
 
     
-    <div id="controls">
-        <div class="section-header">
-            &nbsp;
-            <button id="controls-toggle" title="Hide Controls">hide</button>
-        </div>
+    <div id="controls" class="controls-container">
+        <button id="controls-toggle" title="Hide Controls">hide</button>
         <div id="controls-content">
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Points:</label>
-                    <input type="number" id="numPoints" value="250" min="4" max="200">
+            <div class="section" id="main-controls">
+                <div class="section-header">Main Controls</div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Points:</label>
+                        <input type="number" id="numPoints" value="250" min="4" max="2500" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label>Min Dist:</label>
+                        <input type="number" id="minDistance" value="0.05" min="0.01" max="0.2" step="0.01">
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>Min Dist:</label>
-                    <input type="number" id="minDistance" value="0.05" min="0.01" max="0.2" step="0.01">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Motion:</label>
+                        <input type="range" id="motionWander" value="0" min="0" max="0.1" step="0.001" class="slider">
+                    </div>
+                    <div class="control-group">
+                        <label>Speed:</label>
+                        <input type="range" id="motionSpeed" value="0" min="0" max="0.01" step="0.0001" class="slider">
+                    </div>
                 </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Periodic:</label>
-                    <input type="checkbox" id="periodicMode">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Live Update:</label>
+                        <input type="checkbox" id="liveUpdate">
+                    </div>
+                    <div class="control-group">
+                        <label>Update Step:</label>
+                        <input type="number" id="updateFrequency" value="10" min="1" max="60" step="1">
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>Poisson Sampling:</label>
-                    <input type="checkbox" id="poissonSampling" checked>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Periodic:</label>
+                        <input type="checkbox" id="periodicMode">
+                    </div>
+                    <div class="control-group">
+                        <label>Ghost Cells:</label>
+                        <input type="checkbox" id="showGhostCells">
+                    </div>
+                    <div class="control-group">
+                        <label>MIC:</label>
+                        <input type="checkbox" id="useMIC">
+                    </div>
                 </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Ghost Cell Tiling:</label>
-                    <input type="checkbox" id="showGhostCells">
-                </div>
-                <div class="control-group">
-                    <label>MIC<br>Visualization:</label>
-                    <input type="checkbox" id="useMIC">
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Background</label>
-                    <input type="color" id="backgroundColor" value="#d0d0d0">
-                </div>
-                <div class="control-group">
-                    <label>Boundary:</label>
-                    <input type="checkbox" id="showBoundary" checked>
-                </div>
-            </div>
-            
-            <div class="section-header">Delaunay - Tetrahedra</div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Vertices:</label>
-                    <input type="checkbox" id="showVertices" checked>
-                </div>
-                <div class="control-group">
-                    <label>Delaunay:</label>
-                    <input type="checkbox" id="showDelaunay">
-                </div>
-                <div class="control-group">
-                    <label>Tetrahedra:</label>
-                    <input type="checkbox" id="showTetrahedra">
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Point Size:</label>
-                    <input type="number" id="delaunaySize" value="0.005" min="0.005" max="0.05" step="0.005">
-                </div>
-                <div class="control-group">
-                    <label>Point Color:</label>
-                    <input type="color" id="vertexColor" value="#000000">
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Edge Width:</label>
-                    <input type="number" id="delaunayEdgeWidth" value="2" min="1" max="5" step="1">
-                </div>
-                <div class="control-group">
-                    <label>Edge Color:</label>
-                    <input type="color" id="delaunayEdgeColor" value="#808080">
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Tetra Color:</label>
-                    <input type="color" id="tetraColor" value="#808080">
-                </div>
-                <div class="control-group">
-                    <label>Tetra Opacity:</label>
-                    <input type="number" id="tetraOpacity" value="0.025" min="0.0" max="1.0" step="0.01">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Background:</label>
+                        <input type="color" id="backgroundColor" value="#AAAAAA">
+                    </div>
+                    <div class="control-group">
+                        <label>Boundary:</label>
+                        <input type="checkbox" id="showBoundary" checked>
+                    </div>
+                    <div class="control-group">
+                        <label>Poisson:</label>
+                        <input type="checkbox" id="poissonSampling" checked>
+                    </div>
                 </div>
             </div>
             
-            <div class="section-header">Voronoi</div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Voronoi:</label>
-                    <input type="checkbox" id="showVoronoi" checked>
+            <div class="section" id="visualization-controls">
+                <div class="section-header">Delaunay Triangles / Tetrahedra</div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Vertices:</label>
+                        <input type="checkbox" id="showVertices" checked>
+                    </div>
+                    <div class="control-group">
+                        <label>Delaunay:</label>
+                        <input type="checkbox" id="showDelaunay" checked>
+                    </div>
+                    <div class="control-group">
+                        <label>Tetrahedra:</label>
+                        <input type="checkbox" id="showTetrahedra" checked>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>Faces:</label>
-                    <input type="checkbox" id="showVoronoiFaces" checked>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Point Size:</label>
+                        <input type="number" id="delaunaySize" value="0.005" min="0.005" max="0.05" step="0.005">
+                    </div>
+                    <div class="control-group">
+                        <label>Color:</label>
+                        <input type="color" id="vertexColor" value="#000000">
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>Random Colors:</label>
-                    <input type="checkbox" id="randomVoronoiColors" checked>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Edge Width:</label>
+                        <input type="number" id="delaunayEdgeWidth" value="2" min="1" max="5" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label>Color:</label>
+                        <input type="color" id="delaunayEdgeColor" value="#808080">
+                    </div>
                 </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Tetra Color:</label>
+                        <input type="color" id="tetraColor" value="#808080">
+                    </div>
+                    <div class="control-group">
+                        <label>Opacity:</label>
+                        <input type="number" id="tetraOpacity" value="0.025" min="0.0" max="1.0" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="section-header">Voronoi Diagrams</div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Voronoi:</label>
+                        <input type="checkbox" id="showVoronoi" checked>
+                    </div>
+                    <div class="control-group">
+                        <label>Faces:</label>
+                        <input type="checkbox" id="showVoronoiFaces" checked>
+                    </div>
+                    <div class="control-group">
+                        <label>Random:</label>
+                        <input type="checkbox" id="randomVoronoiColors" checked>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Point Size:</label>
+                        <input type="number" id="voronoiSize" value="0.0025" min="0.0005" max="0.05" step="0.0005">
+                    </div>
+                    <div class="control-group">
+                        <label>Color:</label>
+                        <input type="color" id="voronoiVertexColor" value="#CCCCCC">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Edge Width:</label>
+                        <input type="number" id="voronoiEdgeWidth" value="3" min="1" max="5" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label>Color:</label>
+                        <input type="color" id="voronoiEdgeColor" value="#000000">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Face Color:</label>
+                        <input type="color" id="voronoiFaceColor" value="#32CD32">
+                    </div>
+                    <div class="control-group">
+                        <label>Opacity:</label>
+                        <input type="number" id="voronoiFaceOpacity" value="0.25" min="0.0" max="1.0" step="0.01">
+                    </div>
+                </div>
+                
+                <button id="regenerate">Generate New Points</button>
+                <button id="recompute">Recompute Triangulation</button>
+                <div id="status" class="status"></div>
             </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Point Size:</label>
-                    <input type="number" id="voronoiSize" value="0.005" min="0.005" max="0.05" step="0.005">
-                </div>
-                <div class="control-group">
-                    <label>Point Color:</label>
-                    <input type="color" id="voronoiVertexColor" value="#CCCCCC">
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Edge Width:</label>
-                    <input type="number" id="voronoiEdgeWidth" value="3" min="1" max="5" step="1">
-                </div>
-                <div class="control-group">
-                    <label>Edge Color:</label>
-                    <input type="color" id="voronoiEdgeColor" value="#000000">
-                </div>
-            </div>
-            <div class="control-row">
-                <div class="control-group">
-                    <label>Face Color:</label>
-                    <input type="color" id="voronoiFaceColor" value="#32CD32">
-                </div>
-                <div class="control-group">
-                    <label>Face Opacity:</label>
-                    <input type="number" id="voronoiFaceOpacity" value="0.25" min="0.0" max="1.0" step="0.01">
-                </div>
-            </div>
-            
-            <button id="regenerate">Generate New Points</button>
-            <button id="recompute">Recompute Triangulation</button>
-            <div id="status" class="status"></div>
         </div>
     </div>
     
@@ -277,6 +297,8 @@
         let Module;
         let currentPoints = [];
         let computation = null;
+        let velocities = [];
+        let frameCount = 0;
         
         // Initialize Three.js
         function initThree() {
@@ -636,6 +658,16 @@
 
         // NEW: Ghost Cell Tiling (Phase 3 implementation)
         function createGhostCellTiling() {
+            ghostCellsGroup.children.forEach(child => {
+                if (child.isGroup) {
+                    child.children.forEach(c => {
+                        if (c.geometry) c.geometry.dispose();
+                        if (c.material) c.material.dispose();
+                    });
+                }
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
             ghostCellsGroup.clear();
             
             if (!computation || !document.getElementById('showGhostCells').checked) {
@@ -920,6 +952,11 @@
 
         // Visualize vertices
         function drawVertices(computation) {
+            // Dispose of old geometries and materials
+            verticesGroup.children.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
             verticesGroup.clear();
             
             const vertexSize = parseFloat(document.getElementById('delaunaySize').value);
@@ -1035,6 +1072,10 @@
         
         // Draw Voronoi faces with optional random colors and MIC for periodic boundaries
         function drawVoronoiFaces(computation) {
+            voronoiFacesGroup.children.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
             voronoiFacesGroup.clear();
             
             if (!computation.tetrahedra.length || !computation.barycenters.length) return;
@@ -1126,6 +1167,20 @@
         
         // NEW: Unified mesh drawing function with MIC toggle
         function drawMeshes(computation) {
+            // Dispose of old geometries and materials to prevent memory leaks
+            delaunayGroup.children.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
+            voronoiGroup.children.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
+            voronoiFacesGroup.children.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
+
             delaunayGroup.clear();
             voronoiGroup.clear();
             voronoiFacesGroup.clear();
@@ -1185,6 +1240,10 @@
         
         // Visualize tetrahedra
         function drawTetrahedra(computation) {
+            tetrahedraGroup.children.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            });
             tetrahedraGroup.clear();
             
             if (computation.tetrahedra.length === 0) return;
@@ -1232,6 +1291,11 @@
         async function computeDelaunayVoronoi() {
             if (!Module) return;
             
+            // Add a small delay for live updates to prevent crashes
+            if (document.getElementById('liveUpdate').checked && parseFloat(document.getElementById('motionSpeed').value) > 0) {
+                await new Promise(resolve => setTimeout(resolve, 33)); // ~30 FPS
+            }
+
             // Diagnostic check for corrupt input data
             console.log("--- New Computation Triggered ---");
             console.log(`Checking ${currentPoints.length} points before sending to WASM.`);
@@ -1287,7 +1351,7 @@
             
             const stats = computation.getStats();
             const mode = stats.isPeriodic ? 'Periodic' : 'Non-periodic';
-            const statusMessage = `${mode} | ${stats.numPoints} vertices | ${stats.numTetrahedra} tetrahedra | ${stats.numVoronoiEdges} Voronoi edges`;
+            const statusMessage = `${mode} | ${stats.numPoints} points | ${stats.numTetrahedra} tetrahedra | ${stats.numVoronoiEdges} Voronoi edges`;
             setStatus(statusMessage, true);
         }
         
@@ -1301,6 +1365,49 @@
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
+            frameCount++;
+
+            const motionSpeed = parseFloat(document.getElementById('motionSpeed').value);
+            if (motionSpeed > 0) {
+                const wander = 0.1 - parseFloat(document.getElementById('motionWander').value);
+
+                // Update point positions based on velocity
+                for (let i = 0; i < currentPoints.length; i++) {
+                    // Update velocity with wander
+                    velocities[i][0] += (Math.random() - 0.5) * wander;
+                    velocities[i][1] += (Math.random() - 0.5) * wander;
+                    velocities[i][2] += (Math.random() - 0.5) * wander;
+
+                    // Normalize and scale velocity
+                    const speed = Math.sqrt(velocities[i][0]**2 + velocities[i][1]**2 + velocities[i][2]**2);
+                    if (speed > 0) {
+                        velocities[i][0] = (velocities[i][0] / speed) * motionSpeed;
+                        velocities[i][1] = (velocities[i][1] / speed) * motionSpeed;
+                        velocities[i][2] = (velocities[i][2] / speed) * motionSpeed;
+                    }
+
+                    // Update position
+                    currentPoints[i][0] += velocities[i][0];
+                    currentPoints[i][1] += velocities[i][1];
+                    currentPoints[i][2] += velocities[i][2];
+
+                    // Wrap points for periodic effect
+                    currentPoints[i][0] = (currentPoints[i][0] + 1) % 1;
+                    currentPoints[i][1] = (currentPoints[i][1] + 1) % 1;
+                    currentPoints[i][2] = (currentPoints[i][2] + 1) % 1;
+                }
+                
+                // If live update is enabled, recompute based on frequency
+                if (document.getElementById('liveUpdate').checked) {
+                    const updateFrequency = parseInt(document.getElementById('updateFrequency').value);
+                    if (frameCount % updateFrequency === 0) {
+                        computeDelaunayVoronoi();
+                    }
+                } else {
+                    drawVertices(computation);
+                }
+            }
+
             controls.update();
             renderer.render(scene, camera);
         }
@@ -1320,6 +1427,9 @@
                 generatePoissonPoints(numPoints, minDist) : 
                 generateWellDistributedPoints(numPoints, minDist);
             currentPoints = points;
+
+            // Initialize velocities
+            velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
             
             computeDelaunayVoronoi();
             
@@ -1366,6 +1476,7 @@
                     generatePoissonPoints(numPoints, minDist) : 
                     generateWellDistributedPoints(numPoints, minDist);
                 currentPoints = points;
+                velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
                 computeDelaunayVoronoi();
             });
             
@@ -1455,11 +1566,11 @@
                 }
             });
             
-            // NEW: Background color control
+            // Background color control
             document.getElementById('backgroundColor').addEventListener('change', (e) => {
                 scene.background = new THREE.Color(e.target.value);
             });
-            
+
             animate();
             
         }).catch(err => {
