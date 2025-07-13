@@ -745,23 +745,18 @@
             const scale = parseFloat(document.getElementById('geometricScale').value);
             const divisions = parseInt(document.getElementById('honeycombDivisions').value);
             
-            console.log(`drawGeometricShapes: pointDistribution=${pointDistribution}, spaceFillingType=${spaceFillingType}`);
-            
             // Only draw geometric shapes if we're not using voronoi
             if (pointDistribution === 'voronoi') {
-                console.log('Returning early - pointDistribution is voronoi');
                 return; // Let normal Voronoi visualization handle this
             }
             
             // Handle space-filling structures
             if (spaceFillingType !== 'none') {
-                console.log('Drawing space-filling structure:', spaceFillingType);
                 drawSpaceFillingStructure(spaceFillingType, divisions);
                 return;
             }
             
             // Handle individual Platonic solids
-            console.log('Drawing Platonic solid:', pointDistribution);
             drawPlatonicSolid(pointDistribution, scale);
         }
 
@@ -2294,13 +2289,9 @@
                 const pointDistribution = document.getElementById('pointDistribution').value;
                 const spaceFillingType = document.getElementById('spaceFillingType').value;
                 
-                console.log(`voronoiFaceColor changed: pointDistribution=${pointDistribution}, spaceFillingType=${spaceFillingType}`);
-                
                 if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
-                    console.log('Calling drawGeometricShapes()');
                     drawGeometricShapes(); // Update geometric shapes with new color
                 } else {
-                    console.log('Calling drawVoronoiFaces()');
                     drawVoronoiFaces(computation);
                 }
                 createGhostCellTiling(); // Also update ghost cells
