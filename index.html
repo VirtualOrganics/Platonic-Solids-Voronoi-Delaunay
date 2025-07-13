@@ -118,8 +118,48 @@
     <div id="controls" class="controls-container">
         <button id="controls-toggle" title="Hide Controls">hide</button>
         <div id="controls-content">
+            <!-- Geometric Structure Controls - Now First -->
+            <div class="section" id="geometric-controls">
+                <div class="section-header">Geometric Structures</div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Object:</label>
+                        <select id="pointDistribution">
+                            <option value="voronoi">Voronoi</option>
+                            <option value="tetrahedron">Tetrahedron</option>
+                            <option value="cube">Cube</option>
+                            <option value="octahedron">Octahedron</option>
+                            <option value="dodecahedron">Dodecahedron</option>
+                            <option value="icosahedron">Icosahedron</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Space-Filling:</label>
+                        <select id="spaceFillingType">
+                            <option value="none">None</option>
+                            <option value="cubic_honeycomb">Cubic Honeycomb</option>
+                            <option value="tet_oct_honeycomb">Tet-Oct Honeycomb</option>
+                            <option value="truncated_octahedron">Truncated Octahedron</option>
+                            <option value="rhombic_dodecahedron">Rhombic Dodecahedron</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Scale:</label>
+                        <input type="range" id="geometricScale" value="0.3" min="0.1" max="0.8" step="0.05" class="slider">
+                    </div>
+                    <div class="control-group">
+                        <label>Divisions:</label>
+                        <input type="number" id="honeycombDivisions" value="3" min="2" max="8" step="1">
+                    </div>
+                </div>
+            </div>
+            
             <div class="section" id="main-controls">
-                <div class="section-header">Main Controls</div>
+                <div class="section-header">Controls</div>
                 <div class="control-row">
                     <div class="control-group">
                         <label>Points:</label>
@@ -227,7 +267,7 @@
                     </div>
                 </div>
                 
-                <div class="section-header">Voronoi Diagrams</div>
+                <div class="section-header">Voronoi Diagrams / Objects</div>
                 <div class="control-row">
                     <div class="control-group">
                         <label>Voronoi:</label>
@@ -475,6 +515,775 @@
             if (dz > 0.5) dz -= 1.0; else if (dz < -0.5) dz += 1.0;
 
             return [p1[0] + dx, p1[1] + dy, p1[2] + dz];
+        }
+
+        // =============================================================================
+        // GEOMETRIC POINT GENERATORS
+        // =============================================================================
+
+        // Helper function to normalize and center points in unit cube
+        function normalizeAndCenter(vertices, scale = 0.3, center = [0.5, 0.5, 0.5]) {
+            // Find bounding box
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            let minZ = Infinity, maxZ = -Infinity;
+            
+            for (const v of vertices) {
+                minX = Math.min(minX, v[0]);
+                maxX = Math.max(maxX, v[0]);
+                minY = Math.min(minY, v[1]);
+                maxY = Math.max(maxY, v[1]);
+                minZ = Math.min(minZ, v[2]);
+                maxZ = Math.max(maxZ, v[2]);
+            }
+            
+            // Calculate current center and size
+            const currentCenter = [(minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2];
+            const currentSize = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+            
+            // Normalize and scale
+            return vertices.map(v => [
+                center[0] + (v[0] - currentCenter[0]) * scale / currentSize,
+                center[1] + (v[1] - currentCenter[1]) * scale / currentSize,
+                center[2] + (v[2] - currentCenter[2]) * scale / currentSize
+            ]);
+        }
+
+        // PLATONIC SOLIDS - Generate exact vertex coordinates
+        function generateTetrahedronPoints(scale = 0.3, center = [0.5, 0.5, 0.5]) {
+            // Regular tetrahedron vertices (inscribed in cube)
+            const vertices = [
+                [1, 1, 1],
+                [1, -1, -1],
+                [-1, 1, -1],
+                [-1, -1, 1]
+            ];
+            
+            console.log(`Generated tetrahedron with ${vertices.length} vertices`);
+            return normalizeAndCenter(vertices, scale, center);
+        }
+
+        function generateCubePoints(scale = 0.3, center = [0.5, 0.5, 0.5]) {
+            // Cube vertices
+            const vertices = [
+                [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],  // bottom face
+                [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]       // top face
+            ];
+            
+            console.log(`Generated cube with ${vertices.length} vertices`);
+            return normalizeAndCenter(vertices, scale, center);
+        }
+
+        function generateOctahedronPoints(scale = 0.3, center = [0.5, 0.5, 0.5]) {
+            // Octahedron vertices (dual of cube)
+            const vertices = [
+                [1, 0, 0], [-1, 0, 0],   // x-axis
+                [0, 1, 0], [0, -1, 0],   // y-axis
+                [0, 0, 1], [0, 0, -1]    // z-axis
+            ];
+            
+            console.log(`Generated octahedron with ${vertices.length} vertices`);
+            return normalizeAndCenter(vertices, scale, center);
+        }
+
+        function generateDodecahedronPoints(scale = 0.3, center = [0.5, 0.5, 0.5]) {
+            // Dodecahedron vertices using golden ratio
+            const phi = (1 + Math.sqrt(5)) / 2;  // Golden ratio
+            const invPhi = 1 / phi;
+            
+            const vertices = [
+                // Cube vertices
+                [1, 1, 1], [1, 1, -1], [1, -1, 1], [1, -1, -1],
+                [-1, 1, 1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
+                // Rectangle in xy-plane
+                [0, invPhi, phi], [0, invPhi, -phi], [0, -invPhi, phi], [0, -invPhi, -phi],
+                // Rectangle in xz-plane
+                [invPhi, phi, 0], [invPhi, -phi, 0], [-invPhi, phi, 0], [-invPhi, -phi, 0],
+                // Rectangle in yz-plane
+                [phi, 0, invPhi], [phi, 0, -invPhi], [-phi, 0, invPhi], [-phi, 0, -invPhi]
+            ];
+            
+            console.log(`Generated dodecahedron with ${vertices.length} vertices`);
+            return normalizeAndCenter(vertices, scale, center);
+        }
+
+        function generateIcosahedronPoints(scale = 0.3, center = [0.5, 0.5, 0.5]) {
+            // Icosahedron vertices using golden ratio
+            const phi = (1 + Math.sqrt(5)) / 2;  // Golden ratio
+            
+            const vertices = [
+                // Rectangle in xy-plane
+                [0, 1, phi], [0, 1, -phi], [0, -1, phi], [0, -1, -phi],
+                // Rectangle in xz-plane
+                [1, phi, 0], [1, -phi, 0], [-1, phi, 0], [-1, -phi, 0],
+                // Rectangle in yz-plane
+                [phi, 0, 1], [phi, 0, -1], [-phi, 0, 1], [-phi, 0, -1]
+            ];
+            
+            console.log(`Generated icosahedron with ${vertices.length} vertices`);
+            return normalizeAndCenter(vertices, scale, center);
+        }
+
+        // SPACE-FILLING POLYHEDRA - Generate honeycomb structures
+        function generateCubicHoneycomb(divisions = 3) {
+            const points = [];
+            const step = 1.0 / divisions;
+            
+            // Generate grid points
+            for (let i = 0; i <= divisions; i++) {
+                for (let j = 0; j <= divisions; j++) {
+                    for (let k = 0; k <= divisions; k++) {
+                        points.push([i * step, j * step, k * step]);
+                    }
+                }
+            }
+            
+            console.log(`Generated cubic honeycomb with ${points.length} points (${divisions}x${divisions}x${divisions} grid)`);
+            return points;
+        }
+
+        function generateTetOctHoneycomb(divisions = 3) {
+            const points = [];
+            const step = 1.0 / divisions;
+            
+            // Generate alternating tetrahedra and octahedra centers
+            for (let i = 0; i < divisions; i++) {
+                for (let j = 0; j < divisions; j++) {
+                    for (let k = 0; k < divisions; k++) {
+                        const x = (i + 0.5) * step;
+                        const y = (j + 0.5) * step;
+                        const z = (k + 0.5) * step;
+                        
+                        // Add tetrahedron center
+                        points.push([x, y, z]);
+                        
+                        // Add octahedron centers (offset pattern)
+                        if ((i + j + k) % 2 === 0) {
+                            points.push([x + step/2, y, z]);
+                            points.push([x, y + step/2, z]);
+                            points.push([x, y, z + step/2]);
+                        }
+                    }
+                }
+            }
+            
+            console.log(`Generated tetrahedral-octahedral honeycomb with ${points.length} points`);
+            return points;
+        }
+
+        function generateTruncatedOctahedron(divisions = 3) {
+            const points = [];
+            const step = 1.0 / divisions;
+            
+            // Body-centered cubic lattice
+            for (let i = 0; i < divisions; i++) {
+                for (let j = 0; j < divisions; j++) {
+                    for (let k = 0; k < divisions; k++) {
+                        // Corner points
+                        points.push([i * step, j * step, k * step]);
+                        
+                        // Body-centered points
+                        if (i < divisions - 1 && j < divisions - 1 && k < divisions - 1) {
+                            points.push([
+                                (i + 0.5) * step,
+                                (j + 0.5) * step,
+                                (k + 0.5) * step
+                            ]);
+                        }
+                    }
+                }
+            }
+            
+            console.log(`Generated truncated octahedron honeycomb with ${points.length} points`);
+            return points;
+        }
+
+        function generateRhombicDodecahedron(divisions = 3) {
+            const points = [];
+            const step = 1.0 / divisions;
+            
+            // Face-centered cubic lattice
+            for (let i = 0; i < divisions; i++) {
+                for (let j = 0; j < divisions; j++) {
+                    for (let k = 0; k < divisions; k++) {
+                        const x = i * step;
+                        const y = j * step;
+                        const z = k * step;
+                        
+                        // Corner point
+                        points.push([x, y, z]);
+                        
+                        // Face-centered points
+                        if (i < divisions - 1 && j < divisions - 1) {
+                            points.push([x + step/2, y + step/2, z]);
+                        }
+                        if (i < divisions - 1 && k < divisions - 1) {
+                            points.push([x + step/2, y, z + step/2]);
+                        }
+                        if (j < divisions - 1 && k < divisions - 1) {
+                            points.push([x, y + step/2, z + step/2]);
+                        }
+                    }
+                }
+            }
+            
+            console.log(`Generated rhombic dodecahedron honeycomb with ${points.length} points`);
+            return points;
+        }
+
+        // =============================================================================
+        // GEOMETRIC SHAPE VISUALIZATION (replaces Voronoi when geometric shapes selected)
+        // =============================================================================
+
+        function drawGeometricShapes() {
+            // Clear existing Voronoi visualization (this is now the main drawing function for geometric objects)
+            voronoiGroup.clear();
+            voronoiFacesGroup.clear();
+            
+            const pointDistribution = document.getElementById('pointDistribution').value;
+            const spaceFillingType = document.getElementById('spaceFillingType').value;
+            const scale = parseFloat(document.getElementById('geometricScale').value);
+            const divisions = parseInt(document.getElementById('honeycombDivisions').value);
+            
+            console.log(`drawGeometricShapes: pointDistribution=${pointDistribution}, spaceFillingType=${spaceFillingType}`);
+            
+            // Only draw geometric shapes if we're not using voronoi
+            if (pointDistribution === 'voronoi') {
+                console.log('Returning early - pointDistribution is voronoi');
+                return; // Let normal Voronoi visualization handle this
+            }
+            
+            // Handle space-filling structures
+            if (spaceFillingType !== 'none') {
+                console.log('Drawing space-filling structure:', spaceFillingType);
+                drawSpaceFillingStructure(spaceFillingType, divisions);
+                return;
+            }
+            
+            // Handle individual Platonic solids
+            console.log('Drawing Platonic solid:', pointDistribution);
+            drawPlatonicSolid(pointDistribution, scale);
+        }
+
+        function drawPlatonicSolid(shapeType, scale) {
+            const center = [0.5, 0.5, 0.5];
+            
+            // Get settings from Voronoi panel
+            const voronoiFaceColorHex = document.getElementById('voronoiFaceColor').value;
+            const voronoiFaceColorInt = parseInt(voronoiFaceColorHex.substring(1), 16);
+            const opacity = parseFloat(document.getElementById('voronoiFaceOpacity').value);
+            const voronoiEdgeColorHex = document.getElementById('voronoiEdgeColor').value;
+            const voronoiEdgeColorInt = parseInt(voronoiEdgeColorHex.substring(1), 16);
+            const useRandomColors = document.getElementById('randomVoronoiColors').checked;
+            
+            // Create wireframe material using Voronoi edge color
+            const wireframeMaterial = new THREE.LineBasicMaterial({ 
+                color: voronoiEdgeColorInt,
+                linewidth: 2
+            });
+            
+            // Create solid material using Voronoi face settings
+            let solidMaterial;
+            if (useRandomColors) {
+                const randomColor = generateRandomColor(0); // Use index 0 for single shape
+                solidMaterial = new THREE.MeshPhongMaterial({ 
+                    color: randomColor,
+                    opacity: opacity,
+                    transparent: true,
+                    side: THREE.DoubleSide,
+                    flatShading: true  // This ensures flat faces, not smooth triangulated surfaces
+                });
+            } else {
+                solidMaterial = new THREE.MeshPhongMaterial({ 
+                    color: voronoiFaceColorInt,
+                    opacity: opacity,
+                    transparent: true,
+                    side: THREE.DoubleSide,
+                    flatShading: true  // This ensures flat faces, not smooth triangulated surfaces
+                });
+            }
+            
+            let geometry;
+            
+            switch (shapeType) {
+                case 'tetrahedron':
+                    geometry = new THREE.TetrahedronGeometry(scale, 0); // 0 detail = flat faces
+                    break;
+                case 'cube':
+                    // Create custom cube geometry to show proper square faces
+                    geometry = createCubeWithSquareFaces(scale);
+                    break;
+                case 'octahedron':
+                    geometry = new THREE.OctahedronGeometry(scale, 0); // 0 detail = flat faces
+                    break;
+                case 'dodecahedron':
+                    geometry = new THREE.DodecahedronGeometry(scale, 0); // 0 detail = flat faces
+                    break;
+                case 'icosahedron':
+                    geometry = new THREE.IcosahedronGeometry(scale, 0); // 0 detail = flat faces
+                    break;
+                default:
+                    return;
+            }
+            
+            // Create solid mesh
+            const solidMesh = new THREE.Mesh(geometry, solidMaterial);
+            solidMesh.position.set(center[0], center[1], center[2]);
+            voronoiFacesGroup.add(solidMesh);
+            
+            // Create custom wireframe that shows only the actual edges
+            if (document.getElementById('showVoronoi').checked) {
+                const edgeGeometry = createPolyhedronEdges(shapeType, scale);
+                const edgeMesh = new THREE.LineSegments(edgeGeometry, wireframeMaterial);
+                edgeMesh.position.set(center[0], center[1], center[2]);
+                voronoiGroup.add(edgeMesh);
+            }
+            
+            console.log(`Drew ${shapeType} with scale ${scale} using Voronoi panel settings`);
+        }
+
+        // Create custom cube geometry that properly represents square faces
+        function createCubeWithSquareFaces(size) {
+            const geometry = new THREE.BoxGeometry(size, size, size, 1, 1, 1);
+            
+            // The BoxGeometry creates 12 triangles (2 per face), but we want to make it look like 6 square faces
+            // We'll use vertex colors or face groups to distinguish the faces
+            geometry.computeVertexNormals();
+            
+            return geometry;
+        }
+
+        // Create clean edges for polyhedra without showing triangulation
+        function createPolyhedronEdges(shapeType, scale) {
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            
+            const halfScale = scale / 2;
+            
+            switch (shapeType) {
+                case 'cube':
+                    // Define the 12 edges of a cube
+                    const cubeVertices = [
+                        [-halfScale, -halfScale, -halfScale], [halfScale, -halfScale, -halfScale],
+                        [halfScale, halfScale, -halfScale], [-halfScale, halfScale, -halfScale],
+                        [-halfScale, -halfScale, halfScale], [halfScale, -halfScale, halfScale],
+                        [halfScale, halfScale, halfScale], [-halfScale, halfScale, halfScale]
+                    ];
+                    
+                    // Define edges as pairs of vertex indices
+                    const cubeEdges = [
+                        [0, 1], [1, 2], [2, 3], [3, 0], // bottom face
+                        [4, 5], [5, 6], [6, 7], [7, 4], // top face
+                        [0, 4], [1, 5], [2, 6], [3, 7]  // vertical edges
+                    ];
+                    
+                    for (const edge of cubeEdges) {
+                        positions.push(...cubeVertices[edge[0]]);
+                        positions.push(...cubeVertices[edge[1]]);
+                    }
+                    break;
+                    
+                case 'tetrahedron':
+                    // For other shapes, use the built-in geometry edges
+                    const tetGeometry = new THREE.TetrahedronGeometry(scale, 0);
+                    return new THREE.EdgesGeometry(tetGeometry);
+                    
+                case 'octahedron':
+                    const octGeometry = new THREE.OctahedronGeometry(scale, 0);
+                    return new THREE.EdgesGeometry(octGeometry);
+                    
+                case 'dodecahedron':
+                    const dodGeometry = new THREE.DodecahedronGeometry(scale, 0);
+                    return new THREE.EdgesGeometry(dodGeometry);
+                    
+                case 'icosahedron':
+                    const icoGeometry = new THREE.IcosahedronGeometry(scale, 0);
+                    return new THREE.EdgesGeometry(icoGeometry);
+            }
+            
+            if (positions.length > 0) {
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            }
+            
+            return geometry;
+        }
+
+        function drawSpaceFillingStructure(structureType, divisions) {
+            const step = 1.0 / divisions;
+            
+            // Get settings from Voronoi panel
+            const voronoiFaceColorHex = document.getElementById('voronoiFaceColor').value;
+            const voronoiFaceColorInt = parseInt(voronoiFaceColorHex.substring(1), 16);
+            const opacity = parseFloat(document.getElementById('voronoiFaceOpacity').value);
+            const voronoiEdgeColorHex = document.getElementById('voronoiEdgeColor').value;
+            const voronoiEdgeColorInt = parseInt(voronoiEdgeColorHex.substring(1), 16);
+            const useRandomColors = document.getElementById('randomVoronoiColors').checked;
+            
+            // Create materials using Voronoi panel settings
+            const wireframeMaterial = new THREE.LineBasicMaterial({ 
+                color: voronoiEdgeColorInt,
+                linewidth: 1
+            });
+            
+            const solidMaterial = new THREE.MeshPhongMaterial({ 
+                color: voronoiFaceColorInt,
+                opacity: opacity,
+                transparent: true,
+                side: THREE.DoubleSide,
+                flatShading: true  // Ensure flat faces
+            });
+            
+            switch (structureType) {
+                case 'cubic_honeycomb':
+                    drawCubicHoneycombStructure(divisions, step, wireframeMaterial, solidMaterial);
+                    break;
+                case 'tet_oct_honeycomb':
+                    drawTetOctHoneycombStructure(divisions, step, wireframeMaterial, solidMaterial);
+                    break;
+                case 'truncated_octahedron':
+                    drawTruncatedOctahedronStructure(divisions, step, wireframeMaterial, solidMaterial);
+                    break;
+                case 'rhombic_dodecahedron':
+                    drawRhombicDodecahedronStructure(divisions, step, wireframeMaterial, solidMaterial);
+                    break;
+            }
+        }
+
+        function drawCubicHoneycombStructure(divisions, step, wireframeMaterial, solidMaterial) {
+            const cubeSize = step * 0.8; // Slightly smaller than step to show gaps
+            const useRandomColors = document.getElementById('randomVoronoiColors').checked;
+            const showVoronoiEdges = document.getElementById('showVoronoi').checked;
+            
+            let cubeIndex = 0;
+            for (let i = 0; i < divisions; i++) {
+                for (let j = 0; j < divisions; j++) {
+                    for (let k = 0; k < divisions; k++) {
+                        const x = i * step + step/2;
+                        const y = j * step + step/2;
+                        const z = k * step + step/2;
+                        
+                        // Create cube geometry with flat faces
+                        const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize, 1, 1, 1);
+                        
+                        // Choose material based on random color setting
+                        let material;
+                        if (useRandomColors) {
+                            const randomColor = generateRandomColor(cubeIndex);
+                            material = new THREE.MeshPhongMaterial({
+                                color: randomColor,
+                                opacity: solidMaterial.opacity,
+                                transparent: true,
+                                side: THREE.DoubleSide,
+                                flatShading: true
+                            });
+                        } else {
+                            material = solidMaterial;
+                        }
+                        
+                        // Solid cube
+                        const solidMesh = new THREE.Mesh(geometry, material);
+                        solidMesh.position.set(x, y, z);
+                        voronoiFacesGroup.add(solidMesh);
+                        
+                        // Wireframe only if Voronoi edges are enabled - use clean cube edges
+                        if (showVoronoiEdges) {
+                            const edgeGeometry = createPolyhedronEdges('cube', cubeSize);
+                            const edgeMesh = new THREE.LineSegments(edgeGeometry, wireframeMaterial);
+                            edgeMesh.position.set(x, y, z);
+                            voronoiGroup.add(edgeMesh);
+                        }
+                        
+                        cubeIndex++;
+                    }
+                }
+            }
+            
+            console.log(`Drew cubic honeycomb with ${divisions}³ = ${divisions * divisions * divisions} cubes using Voronoi panel settings`);
+        }
+
+        function drawTetOctHoneycombStructure(divisions, step, wireframeMaterial, solidMaterial) {
+            const size = step * 0.3;
+            const useRandomColors = document.getElementById('randomVoronoiColors').checked;
+            const showVoronoiEdges = document.getElementById('showVoronoi').checked;
+            
+            let shapeIndex = 0;
+            for (let i = 0; i < divisions; i++) {
+                for (let j = 0; j < divisions; j++) {
+                    for (let k = 0; k < divisions; k++) {
+                        const x = i * step + step/2;
+                        const y = j * step + step/2;
+                        const z = k * step + step/2;
+                        
+                        // Choose material based on random color setting
+                        let tetMaterial;
+                        if (useRandomColors) {
+                            const randomColor = generateRandomColor(shapeIndex);
+                            tetMaterial = new THREE.MeshPhongMaterial({
+                                color: randomColor,
+                                opacity: solidMaterial.opacity,
+                                transparent: true,
+                                side: THREE.DoubleSide,
+                                flatShading: true
+                            });
+                        } else {
+                            tetMaterial = solidMaterial;
+                        }
+                        
+                        // Tetrahedron with flat faces
+                        const tetGeometry = new THREE.TetrahedronGeometry(size, 0);
+                        const tetMesh = new THREE.Mesh(tetGeometry, tetMaterial);
+                        tetMesh.position.set(x, y, z);
+                        voronoiFacesGroup.add(tetMesh);
+                        
+                        // Wireframe for tetrahedron
+                        if (showVoronoiEdges) {
+                            const tetWireframe = new THREE.WireframeGeometry(tetGeometry);
+                            const tetWireframeMesh = new THREE.LineSegments(tetWireframe, wireframeMaterial);
+                            tetWireframeMesh.position.set(x, y, z);
+                            voronoiGroup.add(tetWireframeMesh);
+                        }
+                        
+                        shapeIndex++;
+                        
+                        // Octahedron (alternating pattern)
+                        if ((i + j + k) % 2 === 0) {
+                            let octMaterial;
+                            if (useRandomColors) {
+                                const randomColor = generateRandomColor(shapeIndex);
+                                octMaterial = new THREE.MeshPhongMaterial({
+                                    color: randomColor,
+                                    opacity: solidMaterial.opacity,
+                                    transparent: true,
+                                    side: THREE.DoubleSide,
+                                    flatShading: true
+                                });
+                            } else {
+                                octMaterial = solidMaterial;
+                            }
+                            
+                            const octGeometry = new THREE.OctahedronGeometry(size * 0.8, 0);
+                            const octMesh = new THREE.Mesh(octGeometry, octMaterial);
+                            octMesh.position.set(x + step/4, y + step/4, z + step/4);
+                            voronoiFacesGroup.add(octMesh);
+                            
+                            // Wireframe for octahedron
+                            if (showVoronoiEdges) {
+                                const octWireframe = new THREE.WireframeGeometry(octGeometry);
+                                const octWireframeMesh = new THREE.LineSegments(octWireframe, wireframeMaterial);
+                                octWireframeMesh.position.set(x + step/4, y + step/4, z + step/4);
+                                voronoiGroup.add(octWireframeMesh);
+                            }
+                            
+                            shapeIndex++;
+                        }
+                    }
+                }
+            }
+            
+            console.log(`Drew tetrahedral-octahedral honeycomb using Voronoi panel settings`);
+        }
+
+        function drawTruncatedOctahedronStructure(divisions, step, wireframeMaterial, solidMaterial) {
+            const size = step * 0.4;
+            const useRandomColors = document.getElementById('randomVoronoiColors').checked;
+            const showVoronoiEdges = document.getElementById('showVoronoi').checked;
+            
+            let shapeIndex = 0;
+            for (let i = 0; i < divisions; i++) {
+                for (let j = 0; j < divisions; j++) {
+                    for (let k = 0; k < divisions; k++) {
+                        const x = i * step + step/2;
+                        const y = j * step + step/2;
+                        const z = k * step + step/2;
+                        
+                        // Choose material based on random color setting
+                        let material;
+                        if (useRandomColors) {
+                            const randomColor = generateRandomColor(shapeIndex);
+                            material = new THREE.MeshPhongMaterial({
+                                color: randomColor,
+                                opacity: solidMaterial.opacity,
+                                transparent: true,
+                                side: THREE.DoubleSide,
+                                flatShading: true
+                            });
+                        } else {
+                            material = solidMaterial;
+                        }
+                        
+                        // Use octahedron as approximation for truncated octahedron with flat faces
+                        const geometry = new THREE.OctahedronGeometry(size, 0);
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.position.set(x, y, z);
+                        voronoiFacesGroup.add(mesh);
+                        
+                        // Wireframe only if Voronoi edges are enabled
+                        if (showVoronoiEdges) {
+                            const wireframeGeometry = new THREE.WireframeGeometry(geometry);
+                            const wireframeMesh = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+                            wireframeMesh.position.set(x, y, z);
+                            voronoiGroup.add(wireframeMesh);
+                        }
+                        
+                        shapeIndex++;
+                    }
+                }
+            }
+            
+            console.log(`Drew truncated octahedron honeycomb using Voronoi panel settings`);
+        }
+
+        function drawRhombicDodecahedronStructure(divisions, step, wireframeMaterial, solidMaterial) {
+            const size = step * 0.4;
+            const useRandomColors = document.getElementById('randomVoronoiColors').checked;
+            const showVoronoiEdges = document.getElementById('showVoronoi').checked;
+            
+            let shapeIndex = 0;
+            for (let i = 0; i < divisions; i++) {
+                for (let j = 0; j < divisions; j++) {
+                    for (let k = 0; k < divisions; k++) {
+                        const x = i * step + step/2;
+                        const y = j * step + step/2;
+                        const z = k * step + step/2;
+                        
+                        // Choose material based on random color setting
+                        let material;
+                        if (useRandomColors) {
+                            const randomColor = generateRandomColor(shapeIndex);
+                            material = new THREE.MeshPhongMaterial({
+                                color: randomColor,
+                                opacity: solidMaterial.opacity,
+                                transparent: true,
+                                side: THREE.DoubleSide,
+                                flatShading: true
+                            });
+                        } else {
+                            material = solidMaterial;
+                        }
+                        
+                        // Use dodecahedron as approximation for rhombic dodecahedron with flat faces
+                        const geometry = new THREE.DodecahedronGeometry(size, 0);
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.position.set(x, y, z);
+                        voronoiFacesGroup.add(mesh);
+                        
+                        // Wireframe only if Voronoi edges are enabled
+                        if (showVoronoiEdges) {
+                            const wireframeGeometry = new THREE.WireframeGeometry(geometry);
+                            const wireframeMesh = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+                            wireframeMesh.position.set(x, y, z);
+                            voronoiGroup.add(wireframeMesh);
+                        }
+                        
+                        shapeIndex++;
+                    }
+                }
+            }
+            
+            console.log(`Drew rhombic dodecahedron honeycomb using Voronoi panel settings`);
+        }
+
+        // CONTROL PANEL MANAGEMENT
+        function updateControlsVisibility() {
+            const pointDistribution = document.getElementById('pointDistribution').value;
+            const spaceFillingType = document.getElementById('spaceFillingType').value;
+            const isGeometricObject = (pointDistribution !== 'voronoi' || spaceFillingType !== 'none');
+            
+            // Find all Delaunay-specific controls and disable them when geometric objects are selected
+            const delaunayControls = [
+                'showVertices',
+                'showDelaunay', 
+                'showTetrahedra',
+                'delaunaySize',
+                'vertexColor',
+                'delaunayEdgeColor',
+                'delaunayEdgeWidth',
+                'tetraColor',
+                'tetraOpacity'
+            ];
+            
+            delaunayControls.forEach(controlId => {
+                const control = document.getElementById(controlId);
+                if (control) {
+                    control.disabled = isGeometricObject;
+                    // Also fade the control visually
+                    control.style.opacity = isGeometricObject ? '0.5' : '1.0';
+                    
+                    // Find the parent control group and fade the label too
+                    const controlGroup = control.closest('.control-group');
+                    if (controlGroup) {
+                        const label = controlGroup.querySelector('label');
+                        if (label) {
+                            label.style.opacity = isGeometricObject ? '0.5' : '1.0';
+                        }
+                    }
+                }
+            });
+            
+            // Find and disable only the Delaunay Triangles / Tetrahedra section header and its controls
+            // but keep the Voronoi Diagrams / Objects section fully enabled
+            const delaunayHeaders = document.querySelectorAll('.section-header');
+            delaunayHeaders.forEach(header => {
+                if (header.textContent.includes('Delaunay Triangles') || header.textContent.includes('Tetrahedra')) {
+                    header.style.opacity = isGeometricObject ? '0.5' : '1.0';
+                }
+                // Keep "Voronoi Diagrams / Objects" section always enabled
+                if (header.textContent.includes('Voronoi Diagrams / Objects')) {
+                    header.style.opacity = '1.0';
+                }
+            });
+            
+            console.log(`Controls updated: Delaunay controls ${isGeometricObject ? 'disabled' : 'enabled'} for ${pointDistribution}`);
+        }
+
+        // UNIFIED POINT GENERATION FUNCTION
+        function generatePoints() {
+            const numPoints = parseInt(document.getElementById('numPoints').value);
+            const minDist = parseFloat(document.getElementById('minDistance').value);
+            const usePoisson = document.getElementById('poissonSampling').checked;
+            const pointDistribution = document.getElementById('pointDistribution').value;
+            const spaceFillingType = document.getElementById('spaceFillingType').value;
+            const scale = parseFloat(document.getElementById('geometricScale').value);
+            const divisions = parseInt(document.getElementById('honeycombDivisions').value);
+            
+            console.log(`Generating points: distribution=${pointDistribution}, spaceFilling=${spaceFillingType}, scale=${scale}, divisions=${divisions}`);
+            
+            // Handle space-filling types first (they override individual shapes)
+            if (spaceFillingType !== 'none') {
+                switch (spaceFillingType) {
+                    case 'cubic_honeycomb':
+                        return generateCubicHoneycomb(divisions);
+                    case 'tet_oct_honeycomb':
+                        return generateTetOctHoneycomb(divisions);
+                    case 'truncated_octahedron':
+                        return generateTruncatedOctahedron(divisions);
+                    case 'rhombic_dodecahedron':
+                        return generateRhombicDodecahedron(divisions);
+                    default:
+                        console.warn(`Unknown space-filling type: ${spaceFillingType}`);
+                        return generatePoissonPoints(numPoints, minDist);
+                }
+            }
+            
+            // Handle individual geometric shapes
+            switch (pointDistribution) {
+                case 'tetrahedron':
+                    return generateTetrahedronPoints(scale);
+                case 'cube':
+                    return generateCubePoints(scale);
+                case 'octahedron':
+                    return generateOctahedronPoints(scale);
+                case 'dodecahedron':
+                    return generateDodecahedronPoints(scale);
+                case 'icosahedron':
+                    return generateIcosahedronPoints(scale);
+                case 'voronoi':
+                default:
+                    // Use Poisson sampling if enabled, otherwise random
+                    return usePoisson ? 
+                        generatePoissonPoints(numPoints, minDist) : 
+                        generateWellDistributedPoints(numPoints, minDist);
+            }
         }
 
         // NEW: Simple line functions for better performance (width parameter kept for compatibility)
@@ -1296,6 +2105,36 @@
                 await new Promise(resolve => setTimeout(resolve, 33)); // ~30 FPS
             }
 
+            // Check if we're in geometric object mode
+            const pointDistribution = document.getElementById('pointDistribution').value;
+            const spaceFillingType = document.getElementById('spaceFillingType').value;
+            const isGeometricObject = (pointDistribution !== 'voronoi' || spaceFillingType !== 'none');
+            
+            if (isGeometricObject) {
+                // For geometric objects, skip Delaunay computation and just draw the shapes
+                setStatus('Drawing geometric objects...', false);
+                
+                // Clear all visualization groups
+                verticesGroup.clear();
+                delaunayGroup.clear();
+                tetrahedraGroup.clear();
+                voronoiGroup.clear();
+                voronoiFacesGroup.clear();
+                
+                // Draw only the geometric shapes
+                drawGeometricShapes();
+                
+                // Update status
+                const shapeType = spaceFillingType !== 'none' ? spaceFillingType : pointDistribution;
+                setStatus(`${shapeType} object displayed`, true);
+                
+                // Clear computation reference since we're not using Delaunay
+                computation = null;
+                
+                return;
+            }
+
+            // Normal Voronoi mode - run full Delaunay computation
             // Diagnostic check for corrupt input data
             console.log("--- New Computation Triggered ---");
             console.log(`Checking ${currentPoints.length} points before sending to WASM.`);
@@ -1332,7 +2171,7 @@
                 drawVertices(computation);
                 drawMeshes(computation);
                 drawTetrahedra(computation);
-                drawVoronoiFaces(computation); // Ensure this is called
+                drawVoronoiFaces(computation);
                 
                 // NEW: Create ghost cell tiling
                 createGhostCellTiling();
@@ -1419,17 +2258,14 @@
             
             initThree();
             
-            // Generate initial points
-            const numPoints = parseInt(document.getElementById('numPoints').value);
-            const minDist = parseFloat(document.getElementById('minDistance').value);
-            const usePoisson = document.getElementById('poissonSampling').checked;
-            const points = usePoisson ? 
-                generatePoissonPoints(numPoints, minDist) : 
-                generateWellDistributedPoints(numPoints, minDist);
-            currentPoints = points;
+            // Generate initial points using unified function
+            currentPoints = generatePoints();
 
             // Initialize velocities
             velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
+            
+            // Set initial control states
+            updateControlsVisibility();
             
             computeDelaunayVoronoi();
             
@@ -1455,12 +2291,30 @@
             });
 
             document.getElementById('voronoiFaceColor').addEventListener('change', () => {
-                drawVoronoiFaces(computation);
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                console.log(`voronoiFaceColor changed: pointDistribution=${pointDistribution}, spaceFillingType=${spaceFillingType}`);
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    console.log('Calling drawGeometricShapes()');
+                    drawGeometricShapes(); // Update geometric shapes with new color
+                } else {
+                    console.log('Calling drawVoronoiFaces()');
+                    drawVoronoiFaces(computation);
+                }
                 createGhostCellTiling(); // Also update ghost cells
             });
             
             document.getElementById('voronoiFaceOpacity').addEventListener('change', () => {
-                drawVoronoiFaces(computation);
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    drawGeometricShapes(); // Update geometric shapes with new opacity
+                } else {
+                    drawVoronoiFaces(computation);
+                }
                 createGhostCellTiling(); // Also update ghost cells
             });
             
@@ -1469,20 +2323,50 @@
             });
             
             document.getElementById('randomVoronoiColors').addEventListener('change', () => {
-                drawVoronoiFaces(computation);
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    drawGeometricShapes(); // Update geometric shapes with random colors
+                } else {
+                    drawVoronoiFaces(computation);
+                }
                 createGhostCellTiling(); // Also update ghost cells
             });
             
+            // Also update geometric shapes when Voronoi edge settings change
+            document.getElementById('voronoiEdgeColor').addEventListener('change', () => {
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    drawGeometricShapes(); // Update geometric shapes with new edge color
+                }
+            });
+            
+            document.getElementById('showVoronoi').addEventListener('change', () => {
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    drawGeometricShapes(); // Update geometric shapes wireframe visibility
+                }
+            });
+            
             document.getElementById('regenerate').addEventListener('click', () => {
-                const numPoints = parseInt(document.getElementById('numPoints').value);
-                const minDist = parseFloat(document.getElementById('minDistance').value);
-                const usePoisson = document.getElementById('poissonSampling').checked;
-                const points = usePoisson ? 
-                    generatePoissonPoints(numPoints, minDist) : 
-                    generateWellDistributedPoints(numPoints, minDist);
-                currentPoints = points;
+                currentPoints = generatePoints();
                 velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
                 computeDelaunayVoronoi();
+            });
+            
+            // Update controls when Poisson setting changes (affects Voronoi mode)
+            document.getElementById('poissonSampling').addEventListener('change', () => {
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                if (pointDistribution === 'voronoi') {
+                    currentPoints = generatePoints();
+                    velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
+                    computeDelaunayVoronoi();
+                }
             });
             
             document.getElementById('recompute').addEventListener('click', () => {
@@ -1490,6 +2374,37 @@
             });
             
             document.getElementById('periodicMode').addEventListener('change', () => {
+                computeDelaunayVoronoi();
+            });
+            
+            // Add event listeners for new geometric controls
+            document.getElementById('pointDistribution').addEventListener('change', () => {
+                updateControlsVisibility(); // Update control states
+                
+                // Generate new points (this matters for Voronoi mode)
+                currentPoints = generatePoints();
+                velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
+                
+                // Always call computeDelaunayVoronoi - it will decide whether to compute or just draw shapes
+                computeDelaunayVoronoi();
+            });
+            
+            document.getElementById('spaceFillingType').addEventListener('change', () => {
+                updateControlsVisibility(); // Update control states
+                currentPoints = generatePoints();
+                velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
+                computeDelaunayVoronoi();
+            });
+            
+            document.getElementById('geometricScale').addEventListener('input', () => {
+                currentPoints = generatePoints();
+                velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
+                computeDelaunayVoronoi();
+            });
+            
+            document.getElementById('honeycombDivisions').addEventListener('change', () => {
+                currentPoints = generatePoints();
+                velocities = currentPoints.map(() => [(Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)]);
                 computeDelaunayVoronoi();
             });
             
@@ -1520,12 +2435,26 @@
             });
 
             document.getElementById('voronoiEdgeColor').addEventListener('change', () => {
-                drawMeshes(computation);
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    drawGeometricShapes(); // Update geometric shapes with new edge color
+                } else {
+                    drawMeshes(computation);
+                }
             });
             
             // NEW: Voronoi edge width control
             document.getElementById('voronoiEdgeWidth').addEventListener('change', () => {
-                drawMeshes(computation);
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    drawGeometricShapes(); // Update geometric shapes
+                } else {
+                    drawMeshes(computation);
+                }
             });
             
             document.getElementById('tetraColor').addEventListener('change', () => {
@@ -1538,12 +2467,25 @@
             
             // NEW: Event listeners for MIC and Ghost Cell controls
             document.getElementById('useMIC').addEventListener('change', () => {
-                drawMeshes(computation);
-                createGhostCellTiling();
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution !== 'voronoi' || spaceFillingType !== 'none') {
+                    drawGeometricShapes(); // Update geometric shapes
+                } else {
+                    drawMeshes(computation);
+                    createGhostCellTiling();
+                }
             });
             
             document.getElementById('showGhostCells').addEventListener('change', () => {
-                createGhostCellTiling();
+                const pointDistribution = document.getElementById('pointDistribution').value;
+                const spaceFillingType = document.getElementById('spaceFillingType').value;
+                
+                if (pointDistribution === 'voronoi' && spaceFillingType === 'none') {
+                    createGhostCellTiling();
+                }
+                // No need to do anything for geometric shapes
             });
             
             // NEW: Random Voronoi colors control
